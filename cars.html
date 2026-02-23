@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caar Seva — Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════ TOKENS ═══════════════════ */
+:root {
+  --red:       #E8251A;
+  --red-d:     #C01F15;
+  --red-l:     #FFF0EF;
+  --ink:       #1A1A1A;
+  --ink2:      #555;
+  --muted:     #999;
+  --bg:        #F2F2F2;
+  --white:     #fff;
+  --border:    #E0E0E0;
+  --wa:        #25D366;
+  --radius:    10px;
+  --sh:        0 2px 12px rgba(0,0,0,.08);
+  --sh-h:      0 8px 32px rgba(0,0,0,.14);
+  --sidebar-w: 220px;
+  --top-h:     52px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ═══════════════════ TOP BAR ═══════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:400;
+  background:var(--white);border-bottom:1px solid var(--border);
+  height:var(--top-h);padding:0 18px;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);
+}
+.live-wrap{display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;}
+.live-dot{
+  width:9px;height:9px;background:#3DBE6A;border-radius:50%;
+  box-shadow:0 0 0 3px rgba(61,190,106,.2);
+  animation:blink 2s ease infinite;
+}
+@keyframes blink{0%,100%{box-shadow:0 0 0 3px rgba(61,190,106,.2);}50%{box-shadow:0 0 0 6px rgba(61,190,106,.05);}}
+.live-label{font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink2);}
+.live-label span{color:var(--red);}
+
+.search-wrap{position:relative;flex:1;max-width:380px;margin-left:auto;}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+.search-wrap input{
+  width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+  padding:7px 10px 7px 32px;font-family:'Nunito Sans',sans-serif;font-size:13px;
+  color:var(--ink);outline:none;transition:border-color .18s;
+}
+.search-wrap input:focus{border-color:var(--red);}
+.search-wrap input::placeholder{color:var(--muted);}
+
+/* ═══════════════════ LAYOUT ═══════════════════ */
+.layout{display:flex;align-items:flex-start;min-height:calc(100vh - var(--top-h));}
+
+/* ═══════════════════ SIDEBAR (desktop/tablet) ═══════════════════ */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--white);border-right:1px solid var(--border);
+  position:sticky;top:var(--top-h);
+  height:calc(100vh - var(--top-h));
+  overflow-y:auto;padding:16px 14px 32px;
+  display:flex;flex-direction:column;gap:20px;
+}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.sb-section{display:flex;flex-direction:column;gap:8px;}
+.sb-label{
+  font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);
+  padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.sb-pills{display:flex;flex-direction:column;gap:4px;}
+.sb-pill{
+  background:none;border:1.5px solid var(--border);border-radius:7px;
+  padding:7px 11px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;
+  color:var(--ink2);cursor:pointer;text-align:left;transition:all .18s;width:100%;
+}
+.sb-pill:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
+.sb-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
+.sb-sort-pill{
+  background:none;border:1.5px solid var(--border);border-radius:7px;
+  padding:7px 11px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;
+  color:var(--ink2);cursor:pointer;text-align:left;transition:all .18s;width:100%;
+}
+.sb-sort-pill:hover{border-color:var(--ink);color:var(--ink);}
+.sb-sort-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
+.sb-results{font-size:12px;color:var(--muted);}
+.sb-results strong{color:var(--ink);font-weight:700;}
+.sb-clear{
+  background:none;border:none;color:var(--muted);font-size:12px;
+  font-family:'Nunito Sans',sans-serif;cursor:pointer;text-align:left;
+  padding:0;transition:color .18s;
+}
+.sb-clear:hover{color:var(--red);}
+
+/* ── Price Slider (sidebar) ── */
+.price-slider-wrap{padding:4px 2px 8px;}
+.price-range-label{
+  display:flex;justify-content:space-between;
+  font-size:11.5px;font-weight:700;color:var(--ink2);
+  font-family:'Nunito',sans-serif;margin-bottom:10px;
+}
+.price-range-label span{color:var(--red);}
+.dual-slider{position:relative;height:28px;display:flex;align-items:center;}
+.dual-slider input[type=range]{
+  position:absolute;width:100%;height:4px;
+  background:transparent;pointer-events:none;
+  -webkit-appearance:none;appearance:none;outline:none;
+}
+.dual-slider input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--red);border:2px solid #fff;
+  box-shadow:0 1px 6px rgba(232,37,26,.35);
+  pointer-events:auto;cursor:pointer;transition:transform .15s;
+}
+.dual-slider input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.dual-slider input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--red);border:2px solid #fff;
+  box-shadow:0 1px 6px rgba(232,37,26,.35);
+  pointer-events:auto;cursor:pointer;
+}
+.slider-track{
+  position:absolute;left:0;right:0;height:4px;
+  background:var(--border);border-radius:2px;z-index:0;
+}
+.slider-fill{
+  position:absolute;height:4px;background:var(--red);border-radius:2px;z-index:1;
+}
+
+/* ═══════════════════ MOBILE FILTER BAR ═══════════════════ */
+.mob-bar{
+  display:none;/* shown via media query */
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:8px 12px;gap:7px;align-items:center;
+  position:sticky;top:var(--top-h);z-index:300;
+  box-shadow:0 2px 6px rgba(0,0,0,.04);
+}
+
+/* Filter button (frozen left) */
+.mob-filter-btn{
+  flex-shrink:0;
+  background:var(--ink);border:none;border-radius:8px;
+  padding:7px 13px;font-family:'Nunito',sans-serif;
+  font-size:12.5px;font-weight:800;color:#fff;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:background .18s;
+  white-space:nowrap;
+}
+.mob-filter-btn.has-filter{background:var(--red);}
+.mob-filter-btn svg{flex-shrink:0;}
+
+/* Scrollable quick chips */
+.mob-chips-scroll{
+  display:flex;gap:6px;overflow-x:auto;flex:1;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.mob-chips-scroll::-webkit-scrollbar{display:none;}
+.mob-chip{
+  flex-shrink:0;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:20px;padding:5px 13px;
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;
+  color:var(--ink2);cursor:pointer;white-space:nowrap;transition:all .18s;
+}
+.mob-chip:hover{border-color:var(--red);color:var(--red);}
+.mob-chip.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
+/* ═══════════════════ FILTER POPUP ═══════════════════ */
+.popup-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.45);z-index:900;
+  align-items:flex-end;justify-content:center;
+}
+.popup-overlay.open{display:flex;}
+
+.popup{
+  background:var(--white);
+  border-radius:18px 18px 0 0;
+  width:100%;max-width:520px;
+  max-height:88vh;
+  overflow-y:auto;
+  padding:0 0 32px;
+  animation:slideUp .28s cubic-bezier(.34,1.4,.64,1);
+}
+/* On desktop/tablet, show as centered modal instead */
+@media(min-width:700px){
+  .popup-overlay{align-items:center;}
+  .popup{
+    border-radius:14px;max-width:460px;
+    max-height:80vh;margin:16px;
+    animation:popIn .25s cubic-bezier(.34,1.4,.64,1);
+  }
+}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@keyframes popIn  {from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+
+.popup-handle{
+  display:flex;justify-content:center;padding:12px 0 4px;
+}
+.popup-handle-bar{
+  width:36px;height:4px;background:var(--border);border-radius:2px;
+}
+/* Hide handle on desktop */
+@media(min-width:700px){.popup-handle{display:none;}}
+
+.popup-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px 14px;border-bottom:1px solid var(--border);
+}
+.popup-title{font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;color:var(--ink);}
+.popup-close{
+  background:var(--bg);border:none;border-radius:50%;
+  width:30px;height:30px;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink2);transition:background .18s;
+}
+.popup-close:hover{background:var(--border);}
+
+.popup-body{padding:16px 18px;display:flex;flex-direction:column;gap:20px;}
+
+.popup-section{}
+.popup-section-label{
+  font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);
+  margin-bottom:10px;display:block;
+}
+.popup-pills{display:flex;flex-wrap:wrap;gap:7px;}
+.popup-pill{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+  padding:7px 14px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+  color:var(--ink2);cursor:pointer;transition:all .18s;
+}
+.popup-pill:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
+.popup-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
+/* Price slider in popup */
+.popup-price-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;font-weight:700;color:var(--ink2);
+  font-family:'Nunito',sans-serif;margin-bottom:12px;
+}
+.popup-price-label .range-val{
+  background:var(--red-l);color:var(--red);
+  border-radius:6px;padding:3px 10px;font-size:13px;
+}
+
+.popup-footer{
+  padding:14px 18px 0;border-top:1px solid var(--border);
+  display:flex;gap:10px;
+}
+.popup-apply{
+  flex:1;background:var(--red);border:none;border-radius:9px;padding:12px;
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#fff;cursor:pointer;transition:background .18s;
+}
+.popup-apply:hover{background:var(--red-d);}
+.popup-reset{
+  background:none;border:1.5px solid var(--border);border-radius:9px;padding:12px 18px;
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .18s;
+}
+.popup-reset:hover{border-color:var(--ink);color:var(--ink);}
+
+/* ═══════════════════ GRID ═══════════════════ */
+.main{flex:1;min-width:0;}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:18px;padding:18px 18px 48px;
+}
+
+/* ═══════════════════ CARD ═══════════════════ */
+.card{
+  background:var(--white);border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);box-shadow:var(--sh);cursor:pointer;
+  transition:box-shadow .25s,transform .25s;animation:fadeUp .35s ease both;
+  position:relative;display:flex;flex-direction:column;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.card:hover{box-shadow:var(--sh-h);transform:translateY(-4px);}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--red);transform:scaleX(0);transform-origin:left;
+  transition:transform .3s;border-radius:var(--radius) var(--radius) 0 0;z-index:1;
+}
+.card:hover::before{transform:scaleX(1);}
+
+.img-wrap{position:relative;height:190px;overflow:hidden;background:var(--bg);flex-shrink:0;}
+.img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s;}
+.card:hover .img-wrap img{transform:scale(1.05);}
+.no-photo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;}
+
+.badge-sold{
+  position:absolute;top:10px;left:10px;background:var(--red);color:#fff;
+  font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;font-family:'Nunito',sans-serif;
+}
+.badge-n{
+  position:absolute;bottom:8px;right:8px;
+  background:rgba(255,255,255,.92);border:1px solid var(--border);
+  border-radius:20px;padding:2px 8px;font-size:10.5px;color:var(--ink2);
+  font-weight:600;display:flex;align-items:center;gap:3px;
+}
+
+.card-body{padding:14px 16px 12px;flex:1;display:flex;flex-direction:column;}
+.car-make{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:3px;}
+.car-title{font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;line-height:1.25;margin-bottom:10px;}
+.specs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.spec{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:4px;font-weight:600;}
+.card-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);margin-top:auto;gap:8px;}
+.price{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;color:var(--red);line-height:1;}
+.por{font-size:12px;color:var(--muted);font-weight:600;}
+.btn-wa{
+  background:var(--wa);border:none;border-radius:7px;padding:7px 12px;
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#fff;
+  cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px;
+  transition:background .18s;white-space:nowrap;
+}
+.btn-wa:hover{background:#1ead54;}
+
+.state{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);}
+.state p{margin-top:10px;font-size:14px;}
+.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ═══════════════════ DETAIL PAGE ═══════════════════ */
+#detailPage{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#detailPage.open{display:block;}
+.dp-bar{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:11px 16px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;box-shadow:0 1px 6px rgba(0,0,0,.06);
+}
+.dp-back{
+  background:none;border:1.5px solid var(--border);border-radius:8px;
+  padding:6px 13px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+  color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .18s;
+}
+.dp-back:hover{border-color:var(--red);color:var(--red);}
+.dp-bar-title{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+.dp-body{display:flex;flex-direction:column;max-width:920px;margin:0 auto;}
+@media(min-width:700px){.dp-body{flex-direction:row;align-items:flex-start;}}
+
+.dp-left{flex:1.3;min-width:0;}
+.dp-right{flex:1;min-width:0;}
+
+.dp-carousel{
+  position:relative;background:#111;height:310px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+@media(min-width:700px){.dp-carousel{height:380px;}}
+.dp-carousel img{max-width:100%;max-height:100%;object-fit:contain;display:block;transition:opacity .2s;}
+.dp-arrow{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.92);border:none;border-radius:50%;
+  width:40px;height:40px;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:background .18s,color .18s;z-index:5;
+}
+.dp-arrow:hover{background:var(--red);color:#fff;}
+.dp-arrow:disabled{opacity:.2;pointer-events:none;}
+.dp-arrow.prev{left:10px;}.dp-arrow.next{right:10px;}
+.dp-counter{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.55);border-radius:20px;padding:3px 12px;
+  font-size:11.5px;color:#fff;font-weight:700;font-family:'Nunito',sans-serif;
+}
+.dp-thumbs{display:flex;gap:6px;padding:10px 12px;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;}
+.dp-thumbs::-webkit-scrollbar{height:3px;}
+.dp-thumbs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.dp-thumb{width:64px;height:46px;object-fit:cover;border-radius:6px;flex-shrink:0;border:2px solid transparent;cursor:pointer;opacity:.55;transition:all .18s;}
+.dp-thumb:hover{opacity:.85;}
+.dp-thumb.active{border-color:var(--red);opacity:1;}
+
+.dp-info{padding:18px 16px 40px;}
+@media(min-width:700px){.dp-info{padding:22px 22px 40px;}}
+.dp-price-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.dp-price{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;color:var(--red);}
+.dp-sold-tag{background:var(--red);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;border-radius:5px;font-family:'Nunito',sans-serif;}
+.dp-title{font-family:'Nunito',sans-serif;font-size:21px;font-weight:900;line-height:1.2;margin-bottom:3px;}
+.dp-make{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.dp-specs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px;}
+.dp-spec-item{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:11px 13px;display:flex;flex-direction:column;gap:3px;}
+.dp-spec-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:600;}
+.dp-spec-value{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--ink);}
+.dp-cta{display:flex;flex-direction:column;gap:9px;padding-top:14px;border-top:1px solid var(--border);}
+.dp-wa{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--wa);border:none;border-radius:10px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#fff;cursor:pointer;text-decoration:none;transition:background .18s;}
+.dp-wa:hover{background:#1ead54;}
+.dp-call{display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:2px solid var(--border);border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .18s;}
+.dp-call:hover{border-color:var(--ink);color:var(--ink);}
+.swipe-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:20px;padding:3px 12px;font-size:10px;color:rgba(255,255,255,.8);pointer-events:none;animation:fh 4s ease 1s forwards;}
+@keyframes fh{0%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
+
+/* ═══════════════════ MOBILE LAYOUT ═══════════════════ */
+@media(max-width:699px){
+  .sidebar{display:none;}
+  .mob-bar{display:flex;}
+
+  .grid{grid-template-columns:1fr;gap:12px;padding:12px 12px 40px;}
+  .search-wrap{max-width:100%;margin-left:0;}
+
+  /* Make live label visible on mobile */
+  .live-label{display:flex;}
+}
+
+/* On desktop show live label too */
+.live-label{display:flex;}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TOP BAR ═══════════ -->
+<div class="topbar">
+  <div class="live-wrap">
+    <div class="live-dot"></div>
+    <div class="live-label"><span id="availCount">—</span>&nbsp;available</div>
+  </div>
+  <div class="search-wrap">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input id="searchInput" placeholder="Search model, variant, make…" oninput="onSearch()">
+  </div>
+</div>
+
+<!-- ═══════════ MOBILE FILTER BAR ═══════════ -->
+<div class="mob-bar" id="mobBar">
+  <!-- Frozen filter button -->
+  <button class="mob-filter-btn" id="mobFilterBtn" onclick="openPopup()">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+    </svg>
+    Filter &amp; Sort
+  </button>
+  <!-- Scrollable quick chips -->
+  <div class="mob-chips-scroll" id="mobChips">
+    <button class="mob-chip active" data-val="" onclick="quickChip('',this)">All</button>
+  </div>
+</div>
+
+<!-- ═══════════ FILTER POPUP ═══════════ -->
+<div class="popup-overlay" id="popupOverlay" onclick="overlayClose(event)">
+  <div class="popup" id="popup">
+    <div class="popup-handle"><div class="popup-handle-bar"></div></div>
+
+    <div class="popup-header">
+      <span class="popup-title">Filter &amp; Sort</span>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+
+    <div class="popup-body">
+
+      <!-- Sort -->
+      <div class="popup-section">
+        <span class="popup-section-label">Sort By</span>
+        <div class="popup-pills" id="popSortPills">
+          <button class="popup-pill active" data-sort="default"    onclick="setPopSort('default',this)">Latest</button>
+          <button class="popup-pill"        data-sort="price-asc"  onclick="setPopSort('price-asc',this)">Price ↑ Low→High</button>
+          <button class="popup-pill"        data-sort="price-desc" onclick="setPopSort('price-desc',this)">Price ↓ High→Low</button>
+          <button class="popup-pill"        data-sort="km-asc"     onclick="setPopSort('km-asc',this)">Lowest KM First</button>
+        </div>
+      </div>
+
+      <!-- Fuel -->
+      <div class="popup-section">
+        <span class="popup-section-label">Fuel Type</span>
+        <div class="popup-pills" id="popFuelPills">
+          <button class="popup-pill active" data-fuel="" onclick="setPopFuel('',this)">Any</button>
+        </div>
+      </div>
+
+      <!-- Transmission -->
+      <div class="popup-section">
+        <span class="popup-section-label">Transmission</span>
+        <div class="popup-pills" id="popTransPills">
+          <button class="popup-pill active" data-trans="" onclick="setPopTrans('',this)">Any</button>
+        </div>
+      </div>
+
+      <!-- Price slider -->
+      <div class="popup-section">
+        <span class="popup-section-label">Price Range</span>
+        <div class="popup-price-label">
+          <span>₹<span id="popPriceMin">0</span></span>
+          <span class="range-val" id="popPriceRangeLabel">Any Price</span>
+          <span>₹<span id="popPriceMax">50L+</span></span>
+        </div>
+        <div class="dual-slider" id="popDualSlider">
+          <div class="slider-track"></div>
+          <div class="slider-fill" id="popSliderFill"></div>
+          <input type="range" id="popRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onRangeInput()">
+          <input type="range" id="popRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onRangeInput()">
+        </div>
+      </div>
+
+    </div><!-- /popup-body -->
+
+    <div class="popup-footer">
+      <button class="popup-reset" onclick="resetPopup()">Reset</button>
+      <button class="popup-apply" onclick="applyPopup()">Show Results</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN LAYOUT ═══════════ -->
+<div class="layout" id="listView">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sb-results" id="sbResults">All vehicles</div>
+
+    <!-- Fuel -->
+    <div class="sb-section">
+      <div class="sb-label">Fuel Type</div>
+      <div class="sb-pills" id="sbFuelPills"></div>
+    </div>
+
+    <!-- Transmission -->
+    <div class="sb-section">
+      <div class="sb-label">Transmission</div>
+      <div class="sb-pills" id="sbTransPills"></div>
+    </div>
+
+    <!-- Price slider sidebar -->
+    <div class="sb-section">
+      <div class="sb-label">Price Range</div>
+      <div class="price-slider-wrap">
+        <div class="price-range-label">
+          <span>₹<span id="sbPriceMinL">0</span></span>
+          <span id="sbPriceRangeLabel" style="color:var(--red);font-weight:800;font-size:12px;">Any Price</span>
+          <span>₹<span id="sbPriceMaxL">50L+</span></span>
+        </div>
+        <div class="dual-slider" id="sbDualSlider">
+          <div class="slider-track"></div>
+          <div class="slider-fill" id="sbSliderFill"></div>
+          <input type="range" id="sbRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onSbRange()">
+          <input type="range" id="sbRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onSbRange()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Sort -->
+    <div class="sb-section">
+      <div class="sb-label">Sort By</div>
+      <div class="sb-pills" id="sbSortPills">
+        <button class="sb-sort-pill active" onclick="setSbSort('default',this)">Latest First</button>
+        <button class="sb-sort-pill" onclick="setSbSort('price-asc',this)">Price: Low → High</button>
+        <button class="sb-sort-pill" onclick="setSbSort('price-desc',this)">Price: High → Low</button>
+        <button class="sb-sort-pill" onclick="setSbSort('km-asc',this)">Lowest KM First</button>
+      </div>
+    </div>
+
+    <button class="sb-clear" onclick="clearAll()">✕ Clear all filters</button>
+
+  </aside>
+
+  <!-- GRID -->
+  <div class="main">
+    <div class="grid" id="grid">
+      <div class="state"><div class="spinner"></div><p>Loading inventory…</p></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════ DETAIL PAGE ═══════════ -->
+<div id="detailPage">
+  <div class="dp-bar">
+    <button class="dp-back" onclick="closeDetail()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>Back
+    </button>
+    <div class="dp-bar-title" id="dpBarTitle"></div>
+  </div>
+  <div class="dp-body">
+    <div class="dp-left">
+      <div class="dp-carousel" id="dpCarousel">
+        <img id="dpImg" src="" alt="">
+        <button class="dp-arrow prev" id="dpPrev" onclick="navDP(-1)">&#8592;</button>
+        <button class="dp-arrow next" id="dpNext" onclick="navDP(1)">&#8594;</button>
+        <div class="dp-counter" id="dpCounter"></div>
+        <div class="swipe-hint">← Swipe photos →</div>
+      </div>
+      <div class="dp-thumbs" id="dpThumbs"></div>
+    </div>
+    <div class="dp-right">
+      <div class="dp-info">
+        <div class="dp-price-row">
+          <div class="dp-price" id="dpPrice"></div>
+          <div class="dp-sold-tag" id="dpSoldTag" style="display:none">Sold</div>
+        </div>
+        <div class="dp-title" id="dpTitle"></div>
+        <div class="dp-make"  id="dpMake"></div>
+        <div class="dp-specs" id="dpSpecs"></div>
+        <div class="dp-cta">
+          <a class="dp-wa" id="dpWa" href="#" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Enquire on WhatsApp
+          </a>
+          <button class="dp-call" id="dpCall">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.16 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            Call Dealer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCRIPT ═══════════ -->
+<script>
+// ── CONFIG ──────────────────────────────────────────
+const CSV_URL      = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEtyC-33DYGbjgHDEfAR5OSgJkg2qMGDkNL5ezQgLuw4utD4CGoCvW0x1iNcLFLi-JnTarUkK3uZmB/pub?output=csv";
+const WA_NUMBER    = "919999999999";   // ← your WhatsApp number
+const DEALER_PHONE = "9999999999";     // ← your call number
+const MAX_PRICE    = 5000000;          // slider max (50 lakh)
+// ────────────────────────────────────────────────────
+
+let allCars  = [];
+let dpImages = [], dpIdx = 0;
+
+// Shared filter state
+let S = { search:'', fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+
+// Popup temp state (only committed on "Apply")
+let P = {};
+
+// ── DRIVE URL FIXER ──
+function fixDriveUrl(url) {
+  if (!url) return '';
+  url = url.trim().replace(/^"|"$/g,'');
+  if (!url.includes('drive.google.com')) return url;
+  const m1 = url.match(/\/file\/d\/([^\/\?&]+)/);
+  const m2 = url.match(/[?&]id=([^&]+)/);
+  const id  = m1?m1[1]:m2?m2[1]:'';
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=s800` : url;
+}
+
+// ── FETCH ──
+fetch(CSV_URL).then(r=>r.text()).then(parseCSV).catch(()=>{
+  document.getElementById('grid').innerHTML =
+    `<div class="state"><p>⚠️ Could not load inventory.</p></div>`;
+});
+
+function parseCSV(raw) {
+  const lines = raw.trim().split('\n').slice(1);
+  allCars = lines.map((ln,i)=>{
+    const cols   = csvSplit(ln);
+    const photos = cols.slice(9).map(p=>fixDriveUrl(p)).filter(Boolean);
+    return {
+      id:       i,
+      model:    cl(cols[1]), variant: cl(cols[2]), make: cl(cols[3]),
+      fuel:     cl(cols[4]), trans:   cl(cols[5]),
+      odometer: parseInt((cl(cols[6])||'0').replace(/\D/g,''))||0,
+      price:    parseInt((cl(cols[7])||'0').replace(/\D/g,''))||0,
+      status:   cl(cols[8]), photos
+    };
+  }).filter(c=>c.model);
+
+  buildSidebar();
+  buildMobChips();
+  buildPopupOptions();
+  applyFilters();
+}
+function cl(v)  { return (v||'').trim().replace(/^"|"$/g,''); }
+function csvSplit(row) {
+  const out=[]; let inQ=false,cur='';
+  for(let i=0;i<row.length;i++){
+    const ch=row[i];
+    if(ch==='"'){inQ=!inQ;}
+    else if(ch===','&&!inQ){out.push(cur);cur='';}
+    else{cur+=ch;}
+  }
+  out.push(cur); return out;
+}
+
+// ── FORMAT PRICE LABEL ──
+function fmtPrice(v) {
+  if (v >= 100000)  return '₹' + (v/100000).toFixed(v%100000===0?0:1) + 'L';
+  if (v >= 1000)    return '₹' + (v/1000).toFixed(0) + 'K';
+  return '₹' + v;
+}
+
+// ── BUILD SIDEBAR ──
+function buildSidebar() {
+  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
+  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+
+  document.getElementById('sbFuelPills').innerHTML =
+    ['', ...fuels].map((f,i)=>
+      `<button class="sb-pill${i===0?' active':''}" onclick="setSbFuel('${f}',this)">${f||'Any'}</button>`
+    ).join('');
+
+  document.getElementById('sbTransPills').innerHTML =
+    ['', ...trans].map((t,i)=>
+      `<button class="sb-pill${i===0?' active':''}" onclick="setSbTrans('${t}',this)">${t||'Any'}</button>`
+    ).join('');
+
+  updateSbSlider();
+}
+
+// ── BUILD MOBILE QUICK CHIPS ──
+function buildMobChips() {
+  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
+  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+  const cont  = document.getElementById('mobChips');
+  cont.innerHTML = `<button class="mob-chip active" data-val="" onclick="quickChip('',this)">All</button>`;
+  fuels.forEach(f=>{
+    const b=document.createElement('button');
+    b.className='mob-chip';b.dataset.val=`fuel:${f}`;b.textContent=f;
+    b.onclick=()=>quickChip(`fuel:${f}`,b);cont.appendChild(b);
+  });
+  trans.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='mob-chip';b.dataset.val=`trans:${t}`;b.textContent=t;
+    b.onclick=()=>quickChip(`trans:${t}`,b);cont.appendChild(b);
+  });
+}
+
+// ── BUILD POPUP OPTIONS ──
+function buildPopupOptions() {
+  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
+  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+  const fp    = document.getElementById('popFuelPills');
+  const tp    = document.getElementById('popTransPills');
+
+  fp.innerHTML = `<button class="popup-pill active" data-fuel="" onclick="setPopFuel('',this)">Any</button>`;
+  fuels.forEach(f=>{
+    const b=document.createElement('button');
+    b.className='popup-pill';b.dataset.fuel=f;b.textContent=f;
+    b.onclick=()=>setPopFuel(f,b);fp.appendChild(b);
+  });
+
+  tp.innerHTML = `<button class="popup-pill active" data-trans="" onclick="setPopTrans('',this)">Any</button>`;
+  trans.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='popup-pill';b.dataset.trans=t;b.textContent=t;
+    b.onclick=()=>setPopTrans(t,b);tp.appendChild(b);
+  });
+
+  updatePopSlider();
+}
+
+// ══════════════════════════════════════
+//  SIDEBAR HANDLERS
+// ══════════════════════════════════════
+function setSbFuel(v,btn) {
+  S.fuel=v;
+  document.querySelectorAll('#sbFuelPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',b===btn));
+  applyFilters();
+}
+function setSbTrans(v,btn) {
+  S.trans=v;
+  document.querySelectorAll('#sbTransPills .sb-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  applyFilters();
+}
+function setSbSort(v,btn) {
+  S.sort=v;
+  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  applyFilters();
+}
+
+// Sidebar price slider
+function onSbRange() {
+  let mn = parseInt(document.getElementById('sbRangeMin').value);
+  let mx = parseInt(document.getElementById('sbRangeMax').value);
+  if (mn > mx) { const t=mn; mn=mx; mx=t; }
+  S.priceMin = mn; S.priceMax = mx;
+  updateSbSlider();
+  applyFilters();
+}
+function updateSbSlider() {
+  const mn  = S.priceMin, mx = S.priceMax;
+  const pct1 = mn / MAX_PRICE * 100;
+  const pct2 = mx / MAX_PRICE * 100;
+  document.getElementById('sbRangeMin').value = mn;
+  document.getElementById('sbRangeMax').value = mx;
+  document.getElementById('sbSliderFill').style.left  = pct1 + '%';
+  document.getElementById('sbSliderFill').style.width = (pct2-pct1) + '%';
+  document.getElementById('sbPriceMinL').textContent = fmtPrice(mn).replace('₹','');
+  document.getElementById('sbPriceMaxL').textContent = mx >= MAX_PRICE ? '50L+' : fmtPrice(mx).replace('₹','');
+  document.getElementById('sbPriceRangeLabel').textContent =
+    mn===0 && mx>=MAX_PRICE ? 'Any Price' : `${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
+}
+
+// ══════════════════════════════════════
+//  MOBILE QUICK CHIP
+// ══════════════════════════════════════
+function quickChip(val, btn) {
+  S.fuel=''; S.trans='';
+  if (val.startsWith('fuel:'))  S.fuel  = val.slice(5);
+  if (val.startsWith('trans:')) S.trans = val.slice(6);
+  document.querySelectorAll('.mob-chip').forEach(b=>b.classList.toggle('active',b===btn));
+  applyFilters();
+}
+
+// ══════════════════════════════════════
+//  POPUP
+// ══════════════════════════════════════
+function openPopup() {
+  // Copy current state into popup temp
+  P = { ...S };
+  syncPopupUI();
+  document.getElementById('popupOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function overlayClose(e) {
+  if(e.target===document.getElementById('popupOverlay')) closePopup();
+}
+
+function syncPopupUI() {
+  // Sort
+  document.querySelectorAll('#popSortPills .popup-pill').forEach(b=>
+    b.classList.toggle('active', b.dataset.sort===P.sort));
+  // Fuel
+  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>
+    b.classList.toggle('active', b.dataset.fuel===P.fuel));
+  // Trans
+  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>
+    b.classList.toggle('active', b.dataset.trans===P.trans));
+  // Slider
+  document.getElementById('popRangeMin').value = P.priceMin;
+  document.getElementById('popRangeMax').value = P.priceMax;
+  updatePopSlider();
+}
+
+function setPopSort(v,btn) {
+  P.sort=v;
+  document.querySelectorAll('#popSortPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function setPopFuel(v,btn) {
+  P.fuel=v;
+  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function setPopTrans(v,btn) {
+  P.trans=v;
+  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
+
+function onRangeInput() {
+  let mn = parseInt(document.getElementById('popRangeMin').value);
+  let mx = parseInt(document.getElementById('popRangeMax').value);
+  if (mn > mx) { const t=mn; mn=mx; mx=t; }
+  P.priceMin=mn; P.priceMax=mx;
+  updatePopSlider();
+}
+function updatePopSlider() {
+  const mn   = parseInt(document.getElementById('popRangeMin').value);
+  const mx   = parseInt(document.getElementById('popRangeMax').value);
+  const pct1 = mn / MAX_PRICE * 100;
+  const pct2 = mx / MAX_PRICE * 100;
+  document.getElementById('popSliderFill').style.left  = pct1+'%';
+  document.getElementById('popSliderFill').style.width = (pct2-pct1)+'%';
+  document.getElementById('popPriceMin').textContent = fmtPrice(mn).replace('₹','');
+  document.getElementById('popPriceMax').textContent = mx>=MAX_PRICE?'50L+':fmtPrice(mx).replace('₹','');
+  document.getElementById('popPriceRangeLabel').textContent =
+    mn===0 && mx>=MAX_PRICE ? 'Any Price' : `${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
+}
+
+function applyPopup() {
+  S = { ...S, ...P };
+  updateSbSlider();
+  // Sync sidebar pills
+  document.querySelectorAll('#sbFuelPills .sb-pill').forEach(b=>
+    b.classList.toggle('active', b.textContent===(S.fuel||'Any')));
+  document.querySelectorAll('#sbTransPills .sb-pill').forEach(b=>
+    b.classList.toggle('active', b.textContent===(S.trans||'Any')));
+  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach((b,i)=>{
+    const sorts=['default','price-asc','price-desc','km-asc'];
+    b.classList.toggle('active', sorts[i]===S.sort);
+  });
+  // Update filter button indicator
+  const hasFilter = S.fuel||S.trans||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
+  document.getElementById('mobFilterBtn').classList.toggle('has-filter', !!hasFilter);
+  closePopup();
+  applyFilters();
+}
+
+function resetPopup() {
+  P = { search:S.search, fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  document.getElementById('popRangeMin').value = 0;
+  document.getElementById('popRangeMax').value = MAX_PRICE;
+  syncPopupUI();
+}
+
+// ══════════════════════════════════════
+//  SEARCH
+// ══════════════════════════════════════
+function onSearch() {
+  S.search = document.getElementById('searchInput').value.trim().toLowerCase();
+  applyFilters();
+}
+
+// ══════════════════════════════════════
+//  CLEAR ALL
+// ══════════════════════════════════════
+function clearAll() {
+  S = { search:'', fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  document.getElementById('searchInput').value='';
+  document.querySelectorAll('#sbFuelPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#sbTransPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.mob-chip').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('mobFilterBtn').classList.remove('has-filter');
+  updateSbSlider();
+  applyFilters();
+}
+
+// ══════════════════════════════════════
+//  APPLY FILTERS & RENDER
+// ══════════════════════════════════════
+function applyFilters() {
+  let cars = allCars.filter(c=>{
+    const txt=`${c.model} ${c.variant} ${c.make}`.toLowerCase();
+    if(S.search && !txt.includes(S.search)) return false;
+    if(S.fuel   && c.fuel!==S.fuel)         return false;
+    if(S.trans  && c.trans!==S.trans)       return false;
+    if(S.priceMin>0 && c.price<S.priceMin)  return false;
+    if(S.priceMax<MAX_PRICE && c.price>S.priceMax) return false;
+    return true;
+  });
+  if(S.sort==='price-asc')  cars.sort((a,b)=>a.price-b.price);
+  if(S.sort==='price-desc') cars.sort((a,b)=>b.price-a.price);
+  if(S.sort==='km-asc')     cars.sort((a,b)=>a.odometer-b.odometer);
+  renderGrid(cars);
+}
+
+function renderGrid(cars) {
+  const avail = allCars.filter(c=>c.status.toLowerCase()!=='sold').length;
+  document.getElementById('availCount').textContent = avail;
+  document.getElementById('sbResults').innerHTML =
+    `Showing <strong>${cars.length}</strong> of ${allCars.length}`;
+
+  if (!cars.length) {
+    document.getElementById('grid').innerHTML =
+      `<div class="state"><p>🔍 No vehicles found.<br>Try adjusting your filters.</p></div>`;
+    notifyHeight(); return;
+  }
+
+  document.getElementById('grid').innerHTML = cars.map((c,i)=>{
+    const sold    = c.status.toLowerCase()==='sold';
+    const title   = [c.model,c.variant].filter(Boolean).join(' ');
+    const mainImg = c.photos[0]||'';
+    const km      = c.odometer ? c.odometer.toLocaleString('en-IN')+' km' : '';
+    const pStr    = c.price>0 ? '₹'+c.price.toLocaleString('en-IN') : '';
+    const n       = c.photos.length;
+    const waMsg   = encodeURIComponent(`Hi, I'm interested in the ${title}${pStr?' ('+pStr+')':''}. Is it available?`);
+    const waHref  = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+    return `
+    <div class="card" style="animation-delay:${Math.min(i,16)*.04}s" onclick="openDetail(${c.id})">
+      <div class="img-wrap">
+        ${mainImg?`<img src="${x(mainImg)}" alt="${x(title)}" loading="lazy" onerror="this.src='';this.style.display='none'">`:`<div class="no-photo">No photo</div>`}
+        ${sold?'<div class="badge-sold">Sold</div>':''}
+        ${n>1?`<div class="badge-n"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>${n}</div>`:''}
+      </div>
+      <div class="card-body">
+        ${c.make?`<div class="car-make">${x(c.make)}</div>`:''}
+        <div class="car-title">${x(title)||'Unnamed Vehicle'}</div>
+        <div class="specs">
+          ${c.fuel ?`<span class="spec">⛽ ${x(c.fuel)}</span>`:''}
+          ${c.trans?`<span class="spec">⚙️ ${x(c.trans)}</span>`:''}
+          ${km     ?`<span class="spec">🕐 ${km}</span>`:''}
+        </div>
+        <div class="card-foot">
+          ${pStr?`<div class="price">${pStr}</div>`:`<div class="por">Price on request</div>`}
+          <a class="btn-wa" href="${waHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Enquire
+          </a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(notifyHeight,300);
+}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════
+//  DETAIL PAGE
+// ══════════════════════════════════════
+function openDetail(id) {
+  const car=allCars.find(c=>c.id===id); if(!car) return;
+  const title  =[car.model,car.variant].filter(Boolean).join(' ');
+  const pStr   =car.price>0?'₹'+car.price.toLocaleString('en-IN'):'Price on Request';
+  const km     =car.odometer?car.odometer.toLocaleString('en-IN')+' km':'—';
+  const sold   =car.status.toLowerCase()==='sold';
+  const waMsg  =encodeURIComponent(`Hi, I'm interested in the ${title} (${pStr}). Is it still available?`);
+
+  dpImages=car.photos; dpIdx=0;
+  document.getElementById('dpBarTitle').textContent=title;
+  document.getElementById('dpPrice').textContent=pStr;
+  document.getElementById('dpSoldTag').style.display=sold?'':'none';
+  document.getElementById('dpTitle').textContent=title;
+  document.getElementById('dpMake').textContent=car.make||'';
+  document.getElementById('dpSpecs').innerHTML=[
+    {label:'Fuel Type',value:car.fuel||'—'},
+    {label:'Transmission',value:car.trans||'—'},
+    {label:'Odometer',value:km},
+    {label:'Make / Year',value:car.make||'—'},
+  ].map(s=>`<div class="dp-spec-item"><div class="dp-spec-label">${s.label}</div><div class="dp-spec-value">${s.value}</div></div>`).join('');
+  document.getElementById('dpWa').href=`https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+  document.getElementById('dpCall').onclick=()=>{window.location.href=`tel:${DEALER_PHONE}`;};
+
+  if(dpImages.length){updateDPCarousel();buildDPThumbs();}
+  else{document.getElementById('dpImg').src='';document.getElementById('dpThumbs').innerHTML='';document.getElementById('dpCounter').textContent='';}
+
+  document.getElementById('detailPage').classList.add('open');
+  document.getElementById('detailPage').scrollTop=0;
+  document.body.style.overflow='hidden';
+  notifyHeight();
+}
+function closeDetail(){
+  document.getElementById('detailPage').classList.remove('open');
+  document.body.style.overflow='';
+  notifyHeight();
+}
+function updateDPCarousel(){
+  const img=document.getElementById('dpImg');
+  img.style.opacity=0; img.src=dpImages[dpIdx];
+  img.onload=()=>{img.style.opacity=1;}; img.onerror=()=>{img.style.opacity=1;};
+  document.getElementById('dpCounter').textContent=`${dpIdx+1} / ${dpImages.length}`;
+  document.getElementById('dpPrev').disabled=dpIdx===0;
+  document.getElementById('dpNext').disabled=dpIdx===dpImages.length-1;
+  document.querySelectorAll('.dp-thumb').forEach((t,i)=>t.classList.toggle('active',i===dpIdx));
+  const a=document.getElementById('dpThumbs').querySelectorAll('.dp-thumb')[dpIdx];
+  if(a)a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+function buildDPThumbs(){
+  document.getElementById('dpThumbs').innerHTML=dpImages.map((u,i)=>
+    `<img class="dp-thumb${i===0?' active':''}" src="${x(u)}" loading="lazy" onclick="jumpDP(${i})" onerror="this.style.display='none'" alt="Photo ${i+1}">`
+  ).join('');
+}
+function navDP(d){dpIdx=Math.max(0,Math.min(dpImages.length-1,dpIdx+d));updateDPCarousel();}
+function jumpDP(i){dpIdx=i;updateDPCarousel();}
+
+let tX=0;
+document.getElementById('dpCarousel').addEventListener('touchstart',e=>{tX=e.touches[0].clientX;},{passive:true});
+document.getElementById('dpCarousel').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tX; if(Math.abs(dx)>40)navDP(dx<0?1:-1);
+});
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('detailPage').classList.contains('open'))return;
+  if(e.key==='ArrowLeft')navDP(-1);if(e.key==='ArrowRight')navDP(1);if(e.key==='Escape')closeDetail();
+});
+
+// ── IFRAME RESIZE ──
+function notifyHeight(){
+  const h=Math.max(document.body.scrollHeight,700);
+  try{
+    window.parent.postMessage({type:'setHeight',height:h},'*');
+    window.parent.postMessage(JSON.stringify({sentinel:'amp',type:'embed-size',height:h}),'*');
+  }catch(e){}
+}
+window.addEventListener('load',notifyHeight);
+window.addEventListener('resize',notifyHeight);
+</script>
+</body>
+</html>
