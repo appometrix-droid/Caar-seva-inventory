@@ -7,6 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=Nunito+Sans:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
 <style>
+@font-face {
+  font-family: 'Bauhaus 93';
+  src: local('Bauhaus 93'), local('Bauhaus93');
+  /* Bauhaus 93 is a system font on Windows; on other systems falls back gracefully */
+}
+</style>
+
+<style>
 
 /* ══════════════════════════════════════════
    TOKENS
@@ -38,105 +46,15 @@ body {
   overflow-x: hidden;
 }
 
-/* ══════════════════════════════════════════
-   NAV
-══════════════════════════════════════════ */
-nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 900;
-  padding: 0 40px;
-  height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(15,15,15,0.55);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  transition: background .35s;
-}
-nav.scrolled {
-  background: rgba(15,15,15,0.92);
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-.nav-logo-text {
-  font-family: 'Nunito', sans-serif;
-  font-weight: 900;
-  font-size: 22px;
-  color: #fff;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-.nav-logo-text .r { color: var(--red); }
-
-.nav-tag {
-  font-size: 9px;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-  font-weight: 600;
-  margin-left: 2px;
-  margin-top: 1px;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  list-style: none;
-}
-.nav-links a {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.75);
-  text-decoration: none;
-  letter-spacing: 0.5px;
-  transition: color .2s;
-}
-.nav-links a:hover { color: #fff; }
-
-.nav-cta {
-  background: var(--red);
-  border: none;
-  border-radius: 8px;
-  padding: 9px 22px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  color: #fff;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background .2s, transform .15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.nav-cta:hover { background: var(--red-d); transform: translateY(-1px); }
-
-.nav-mob-menu {
-  display: none;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 4px;
-}
 
 /* ══════════════════════════════════════════
    HERO
 ══════════════════════════════════════════ */
 .hero {
   position: relative;
-  height: 100vh;
-  min-height: 600px;
+  height: 92vh;
+  min-height: 520px;
+  max-height: 860px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,17 +72,74 @@ nav.scrolled {
   background-size: cover;
   background-position: center;
   opacity: 0;
-  transition: opacity 1.8s ease;
-  transform: scale(1.05);
-  transition: opacity 1.8s ease, transform 8s ease;
+  transform: scale(1.06);
+  transition: opacity 1.6s ease, transform 9s ease;
+  z-index: 0;
 }
 .hero-slide.active {
   opacity: 1;
   transform: scale(1);
+  z-index: 1;
 }
-/* Photo 1: car yard daylight */
-.hero-slide:nth-child(1) {
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>');
+
+/* Slideshow arrows */
+.slide-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .2s;
+}
+.slide-arrow:hover {
+  background: rgba(232,37,26,0.7);
+  border-color: var(--red);
+  transform: translateY(-50%) scale(1.1);
+}
+.slide-prev { left: 24px; }
+.slide-next { right: 24px; }
+
+/* Dot indicators */
+.slide-dots {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.slide-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: all .3s;
+  border: 1.5px solid rgba(255,255,255,0.5);
+}
+.slide-dot.active {
+  background: #fff;
+  width: 24px;
+  border-radius: 4px;
+  border-color: #fff;
+}
+
+@media(max-width:600px) {
+  .slide-arrow { width:38px; height:38px; font-size:15px; }
+  .slide-prev { left: 12px; }
+  .slide-next { right: 12px; }
+  .slide-dots { bottom: 110px; }
 }
 
 /* Dark overlay gradient */
@@ -228,7 +203,7 @@ nav.scrolled {
 }
 
 .hero-logo-display {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Bauhaus 93', 'Nunito', sans-serif;
   font-weight: 900;
   font-size: clamp(48px, 9vw, 96px);
   color: #fff;
@@ -342,39 +317,6 @@ nav.scrolled {
   text-transform: uppercase;
 }
 
-/* Hero stats strip */
-.hero-stats {
-  position: absolute;
-  bottom: 90px;
-  left: 0; right: 0;
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  padding: 0 40px;
-  animation: fadeUp .8s ease .8s both;
-}
-.stat-item {
-  text-align: center;
-  padding: 16px 32px;
-  border-right: 1px solid rgba(255,255,255,0.12);
-}
-.stat-item:last-child { border-right: none; }
-.stat-num {
-  font-family: 'Nunito', sans-serif;
-  font-size: 26px;
-  font-weight: 900;
-  color: #fff;
-  line-height: 1;
-}
-.stat-num span { color: var(--red); }
-.stat-lbl {
-  font-size: 10.5px;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-top: 3px;
-}
 
 @keyframes fadeUp {
   from { opacity:0; transform:translateY(24px); }
@@ -787,7 +729,7 @@ footer::before {
 }
 
 .footer-brand .logo-text {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Bauhaus 93', 'Nunito', sans-serif;
   font-weight: 900;
   font-size: 28px;
   color: #fff;
@@ -926,10 +868,6 @@ footer::before {
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media(max-width: 900px) {
-  nav { padding: 0 20px; }
-  .nav-links, .nav-cta { display: none; }
-  .nav-mob-menu { display: block; }
-
   #featured, #why, #about, #trust { padding-left: 20px; padding-right: 20px; }
   #featured { padding-top: 50px; padding-bottom: 60px; }
 
@@ -951,7 +889,6 @@ footer::before {
 }
 
 @media(max-width: 600px) {
-  .hero-stats { display: none; }
   .hero-scroll { bottom: 100px; }
   .hero-logo-display { letter-spacing: -1px; }
 
@@ -968,11 +905,15 @@ footer::before {
 
 /* Scroll reveal */
 .reveal {
-  opacity: 0;
-  transform: translateY(30px);
+  opacity: 1; /* visible by default so iframe/embed always shows content */
+  transform: translateY(0);
   transition: opacity .7s ease, transform .7s ease;
 }
-.reveal.visible {
+.reveal.anim { /* JS adds this class to opt-in to animation */
+  opacity: 0;
+  transform: translateY(30px);
+}
+.reveal.anim.visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -985,40 +926,26 @@ footer::before {
 </head>
 <body>
 
-<!-- ═══════════ NAV ═══════════ -->
-<nav id="nav">
-  <a href="#" class="nav-logo">
-    <!-- Logo text matching brand -->
-    <div class="nav-logo-text">C<span class="r">aa</span>r Sev<span class="r">a</span></div>
-    <div class="nav-tag">Certified Pre-Owned</div>
-  </a>
-
-  <ul class="nav-links">
-    <li><a href="#">Home</a></li>
-    <li><a href="https://sites.google.com/view/caarseva/buy-cars">Buy Cars</a></li>
-    <li><a href="#why">How It Works</a></li>
-    <li><a href="#about">About Us</a></li>
-  </ul>
-
-  <a href="https://sites.google.com/view/caarseva/buy-cars" class="nav-cta">
-    Browse Inventory
-    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-      <path d="M5 12h14M12 5l7 7-7 7"/>
-    </svg>
-  </a>
-
-  <button class="nav-mob-menu" onclick="alert('Menu')">☰</button>
-</nav>
 
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero" id="home">
 
   <!-- Background slideshow -->
   <div class="hero-slides" id="heroSlides">
-    <!-- Slides filled by JS with uploaded images -->
     <div class="hero-slide active" style="background-image:url('https://drive.google.com/thumbnail?id=1D61qvP29n0egFIc9PtTRUa0IDLKtIAH9&sz=s1600');"></div>
     <div class="hero-slide" style="background-image:url('https://drive.google.com/thumbnail?id=1URfa2HzB7tHci4SqdhDiv9ndC8m8cOBe&sz=s1600');"></div>
     <div class="hero-slide" style="background-image:url('https://drive.google.com/thumbnail?id=1RZJOGpRbITXCnynOJRbcta-Fcqdqq28Z&sz=s1600');"></div>
+  </div>
+
+  <!-- Prev / Next arrows -->
+  <button class="slide-arrow slide-prev" onclick="(()=>{clearInterval(slideTimer);goToSlide(current-1);startSlider();})()">&#8592;</button>
+  <button class="slide-arrow slide-next" onclick="(()=>{clearInterval(slideTimer);goToSlide(current+1);startSlider();})()">&#8594;</button>
+
+  <!-- Dot indicators -->
+  <div class="slide-dots">
+    <div class="slide-dot active"></div>
+    <div class="slide-dot"></div>
+    <div class="slide-dot"></div>
   </div>
 
   <div class="hero-overlay"></div>
@@ -1031,7 +958,7 @@ footer::before {
     </div>
 
     <div class="hero-logo-display">
-      C<span class="r">aa</span>r Sev<span class="r">a</span>
+      Ca<span class="r">a</span>r Sev<span class="r">a</span>
     </div>
 
     <div class="hero-tagline">Buy and Sell, Sit and Relax</div>
@@ -1051,26 +978,6 @@ footer::before {
         </svg>
         Our Story
       </a>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="hero-stats">
-    <div class="stat-item">
-      <div class="stat-num">500<span>+</span></div>
-      <div class="stat-lbl">Cars Sold</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">100<span>%</span></div>
-      <div class="stat-lbl">Certified</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">5<span>★</span></div>
-      <div class="stat-lbl">Customer Rating</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">24<span>h</span></div>
-      <div class="stat-lbl">Response Time</div>
     </div>
   </div>
 
@@ -1224,7 +1131,7 @@ footer::before {
 
     <div class="about-img reveal">
       <!-- Using the uploaded showroom photo as a CSS background -->
-      <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:80px;">🚗</div>
+      <div style="width:100%;height:100%;background-image:url('https://drive.google.com/thumbnail?id=1URfa2HzB7tHci4SqdhDiv9ndC8m8cOBe&sz=s1200');background-size:cover;background-position:center;"></div>
       <div class="about-img-badge">📍 Yelahanka, <span>Bengaluru</span></div>
     </div>
 
@@ -1274,7 +1181,7 @@ footer::before {
     <div class="footer-top">
 
       <div class="footer-brand">
-        <div class="logo-text">C<span class="r">aa</span>r Sev<span class="r">a</span></div>
+        <div class="logo-text">Ca<span class="r">a</span>r Sev<span class="r">a</span></div>
         <div class="logo-sub">Certified Pre-Owned Cars</div>
         <p>Bengaluru's most trusted destination for certified pre-owned vehicles. Quality cars, honest prices, and a buying experience that's truly hassle-free.</p>
         <div class="socials">
@@ -1306,7 +1213,7 @@ footer::before {
             </a>
           </li>
           <li><a href="tel:+919999999999">📞 +91 99999 99999</a></li>
-          <li><a href="mailto:caarseva@gmail.com">✉️ caarseva@gmail.com</a></li>
+          <li><a href="/cdn-cgi/l/email-protection#a9cac8c8dbdaccdfc8e9cec4c8c0c587cac6c4">✉️ <span class="__cf_email__" data-cfemail="82e1e3e3f0f1e7f4e3c2e5efe3ebeeace1edef">[email&#160;protected]</span></a></li>
           <li>
             <a href="https://maps.google.com/?q=1009+80feet+road+Yelahanka+New+Town+Bengaluru" target="_blank">
               🗺️ Get Directions
@@ -1346,51 +1253,85 @@ footer::before {
   </svg>
 </a>
 
-<script>
-// ── NAV SCROLL EFFECT ──
-window.addEventListener('scroll', () => {
-  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
-});
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 
 // ── HERO SLIDESHOW ──
 const slides = document.querySelectorAll('.hero-slide');
+const dots   = document.querySelectorAll('.slide-dot');
 let current = 0;
-setInterval(() => {
+let slideTimer;
+
+function goToSlide(n) {
   slides[current].classList.remove('active');
-  current = (current + 1) % slides.length;
+  dots[current] && dots[current].classList.remove('active');
+  current = (n + slides.length) % slides.length;
   slides[current].classList.add('active');
-}, 5000);
+  dots[current] && dots[current].classList.add('active');
+}
+
+function startSlider() {
+  slideTimer = setInterval(() => goToSlide(current + 1), 5000);
+}
+
+startSlider();
+
+// Dot click
+dots.forEach((d, i) => d.addEventListener('click', () => {
+  clearInterval(slideTimer);
+  goToSlide(i);
+  startSlider();
+}));
+
+// Swipe support for mobile
+let touchX = 0;
+document.querySelector('.hero-slides').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+document.querySelector('.hero-slides').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) {
+    clearInterval(slideTimer);
+    goToSlide(dx < 0 ? current + 1 : current - 1);
+    startSlider();
+  }
+});
 
 // ── SCROLL REVEAL ──
-const revealEls = document.querySelectorAll('.reveal');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      observer.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.12 });
-revealEls.forEach(el => observer.observe(el));
+// Only animate if page is NOT inside an iframe (standalone page)
+// In iframe context, all .reveal elements stay visible (no animation)
+const inIframe = window.self !== window.top;
+if (!inIframe) {
+  const revealEls = document.querySelectorAll('.reveal');
+  revealEls.forEach(el => el.classList.add('anim')); // opt into animation
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  revealEls.forEach(el => observer.observe(el));
+}
 
 // ── IFRAME AUTO-RESIZE ──
+// Listen for inner cars frame height messages
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'setHeight') {
     const frame = document.getElementById('carsFrame');
     if (frame) frame.style.minHeight = e.data.height + 'px';
   }
 });
+// Notify parent Google Sites of this page's own height
+function notifyParentHeight() {
+  const h = document.body.scrollHeight;
+  try {
+    window.parent.postMessage({ type: 'setHeight', height: h }, '*');
+    window.parent.postMessage(JSON.stringify({ sentinel:'amp', type:'embed-size', height: h }), '*');
+  } catch(e) {}
+}
+window.addEventListener('load', notifyParentHeight);
+window.addEventListener('resize', notifyParentHeight);
+setTimeout(notifyParentHeight, 800);
+setTimeout(notifyParentHeight, 2000);
 
 // ── SMOOTH ANCHOR SCROLL ──
 document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    const target = document.querySelector(a.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-});
-</script>
-</body>
-</html>
