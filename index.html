@@ -76,65 +76,7 @@ body {
   z-index: 1;
 }
 
-/* Slideshow arrows */
-.slide-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 4;
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .2s, transform .2s;
-}
-.slide-arrow:hover {
-  background: rgba(232,37,26,0.7);
-  border-color: var(--red);
-  transform: translateY(-50%) scale(1.1);
-}
-.slide-prev { left: 24px; }
-.slide-next { right: 24px; }
 
-/* Dot indicators */
-.slide-dots {
-  position: absolute;
-  bottom: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.slide-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.35);
-  cursor: pointer;
-  transition: all .3s;
-  border: 1.5px solid rgba(255,255,255,0.5);
-}
-.slide-dot.active {
-  background: #fff;
-  width: 24px;
-  border-radius: 4px;
-  border-color: #fff;
-}
-
-@media(max-width:600px) {
-  .slide-arrow { width:38px; height:38px; font-size:15px; }
-  .slide-prev { left: 12px; }
-  .slide-next { right: 12px; }
-  .slide-dots { bottom: 110px; }
-}
 
 /* Dark overlay gradient */
 .hero-overlay {
@@ -903,16 +845,6 @@ footer::before {
     <div class="hero-slide" style="background-image:url('https://drive.google.com/thumbnail?id=1RZJOGpRbITXCnynOJRbcta-Fcqdqq28Z&sz=s1600');"></div>
   </div>
 
-  <!-- Prev / Next arrows -->
-  <button class="slide-arrow slide-prev" onclick="(()=>{clearInterval(slideTimer);goToSlide(current-1);startSlider();})()">&#8592;</button>
-  <button class="slide-arrow slide-next" onclick="(()=>{clearInterval(slideTimer);goToSlide(current+1);startSlider();})()">&#8594;</button>
-
-  <!-- Dot indicators -->
-  <div class="slide-dots">
-    <div class="slide-dot active"></div>
-    <div class="slide-dot"></div>
-    <div class="slide-dot"></div>
-  </div>
 
   <div class="hero-overlay"></div>
 
@@ -1213,44 +1145,14 @@ footer::before {
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 
-// ── HERO SLIDESHOW ──
+// ── HERO SLIDESHOW — auto only, no arrows/dots ──
 const slides = document.querySelectorAll('.hero-slide');
-const dots   = document.querySelectorAll('.slide-dot');
 let current = 0;
-let slideTimer;
-
-function goToSlide(n) {
+setInterval(() => {
   slides[current].classList.remove('active');
-  dots[current] && dots[current].classList.remove('active');
-  current = (n + slides.length) % slides.length;
+  current = (current + 1) % slides.length;
   slides[current].classList.add('active');
-  dots[current] && dots[current].classList.add('active');
-}
-
-function startSlider() {
-  slideTimer = setInterval(() => goToSlide(current + 1), 5000);
-}
-
-startSlider();
-
-// Dot click
-dots.forEach((d, i) => d.addEventListener('click', () => {
-  clearInterval(slideTimer);
-  goToSlide(i);
-  startSlider();
-}));
-
-// Swipe support for mobile
-let touchX = 0;
-document.querySelector('.hero-slides').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-document.querySelector('.hero-slides').addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) {
-    clearInterval(slideTimer);
-    goToSlide(dx < 0 ? current + 1 : current - 1);
-    startSlider();
-  }
-});
+}, 5000);
 
 // ── SCROLL REVEAL ──
 // Only animate if page is NOT inside an iframe (standalone page)
