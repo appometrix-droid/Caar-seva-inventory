@@ -9,8 +9,11 @@
 <style>
 @font-face {
   font-family: 'Bauhaus 93';
-  src: local('Bauhaus 93'), local('Bauhaus93');
-  /* Bauhaus 93 is a system font on Windows; on other systems falls back gracefully */
+  src: url('https://db.onlinewebfonts.com/t/6ccef73ae2de0c3b5abb61cdd0e87ef9.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/6ccef73ae2de0c3b5abb61cdd0e87ef9.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 </style>
 
@@ -204,6 +207,7 @@ body {
 
 .hero-logo-display {
   font-family: 'Bauhaus 93', 'Nunito', sans-serif;
+  font-weight: normal; /* Bauhaus 93 is a display font, doesn't need 900 */
   font-weight: 900;
   font-size: clamp(48px, 9vw, 96px);
   color: #fff;
@@ -255,28 +259,6 @@ body {
   box-shadow: 0 8px 32px rgba(232,37,26,0.55);
 }
 
-.btn-ghost {
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 10px;
-  padding: 13px 28px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all .2s;
-  backdrop-filter: blur(8px);
-}
-.btn-ghost:hover {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.5);
-  transform: translateY(-2px);
-}
 
 /* Scroll indicator */
 .hero-scroll {
@@ -730,6 +712,7 @@ footer::before {
 
 .footer-brand .logo-text {
   font-family: 'Bauhaus 93', 'Nunito', sans-serif;
+  font-weight: normal;
   font-weight: 900;
   font-size: 28px;
   color: #fff;
@@ -971,13 +954,7 @@ footer::before {
         </svg>
         Browse All Cars
       </a>
-      <a href="#about" class="btn-ghost">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4l3 3"/>
-        </svg>
-        Our Story
-      </a>
+
     </div>
   </div>
 
