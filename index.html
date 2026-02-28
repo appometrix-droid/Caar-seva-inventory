@@ -6,16 +6,7 @@
 <title>Caar Seva — Certified Pre-Owned Cars, Bengaluru</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=Nunito+Sans:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
-<style>
-@font-face {
-  font-family: 'Bauhaus 93';
-  src: url('https://db.onlinewebfonts.com/t/6ccef73ae2de0c3b5abb61cdd0e87ef9.woff2') format('woff2'),
-       url('https://db.onlinewebfonts.com/t/6ccef73ae2de0c3b5abb61cdd0e87ef9.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-</style>
+
 
 <style>
 
@@ -205,18 +196,14 @@ body {
   50%{transform:scale(1.4);opacity:.7;}
 }
 
-.hero-logo-display {
-  font-family: 'Bauhaus 93', 'Nunito', sans-serif;
-  font-weight: normal; /* Bauhaus 93 is a display font, doesn't need 900 */
-  font-weight: 900;
-  font-size: clamp(48px, 9vw, 96px);
-  color: #fff;
-  line-height: 0.95;
-  letter-spacing: -2px;
-  margin-bottom: 6px;
+.hero-logo-img {
+  height: clamp(70px, 12vw, 130px);
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 8px;
   animation: fadeUp .8s ease .35s both;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5));
 }
-.hero-logo-display .r { color: var(--red); }
 
 .hero-tagline {
   font-family: 'Playfair Display', serif;
@@ -710,17 +697,13 @@ footer::before {
   margin-bottom: 32px;
 }
 
-.footer-brand .logo-text {
-  font-family: 'Bauhaus 93', 'Nunito', sans-serif;
-  font-weight: normal;
-  font-weight: 900;
-  font-size: 28px;
-  color: #fff;
-  letter-spacing: -0.5px;
-  line-height: 1;
+.footer-logo-img {
+  height: 58px;
+  width: auto;
+  object-fit: contain;
+  display: block;
   margin-bottom: 6px;
 }
-.footer-brand .logo-text .r { color: var(--red); }
 .footer-brand .logo-sub {
   font-size: 10px;
   letter-spacing: 2px;
@@ -873,7 +856,7 @@ footer::before {
 
 @media(max-width: 600px) {
   .hero-scroll { bottom: 100px; }
-  .hero-logo-display { letter-spacing: -1px; }
+  .hero-logo-img { height: 70px; }
 
   .steps { grid-template-columns: 1fr; gap: 32px; }
   .steps::before { display: none; }
@@ -940,9 +923,7 @@ footer::before {
       Bengaluru's Trusted Used Car Destination
     </div>
 
-    <div class="hero-logo-display">
-      Ca<span class="r">a</span>r Sev<span class="r">a</span>
-    </div>
+    <img src="https://drive.google.com/thumbnail?id=1LWFjToS8Cl8_wJvGUFOnc_KaFXO0KEYH&sz=s400" alt="Caar Seva" class="hero-logo-img">
 
     <div class="hero-tagline">Buy and Sell, Sit and Relax</div>
 
@@ -1158,7 +1139,7 @@ footer::before {
     <div class="footer-top">
 
       <div class="footer-brand">
-        <div class="logo-text">Ca<span class="r">a</span>r Sev<span class="r">a</span></div>
+        <img src="https://drive.google.com/thumbnail?id=1LWFjToS8Cl8_wJvGUFOnc_KaFXO0KEYH&sz=s400" alt="Caar Seva" class="footer-logo-img">
         <div class="logo-sub">Certified Pre-Owned Cars</div>
         <p>Bengaluru's most trusted destination for certified pre-owned vehicles. Quality cars, honest prices, and a buying experience that's truly hassle-free.</p>
         <div class="socials">
