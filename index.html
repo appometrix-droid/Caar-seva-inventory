@@ -189,44 +189,7 @@ body {
 }
 
 
-/* Scroll indicator */
-.hero-scroll {
-  position: absolute;
-  bottom: 140px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  animation: fadeUp .8s ease .9s both;
-}
-.scroll-mouse {
-  width: 22px; height: 34px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-radius: 11px;
-  display: flex;
-  justify-content: center;
-  padding-top: 5px;
-}
-.scroll-wheel {
-  width: 3px; height: 6px;
-  background: rgba(255,255,255,0.6);
-  border-radius: 2px;
-  animation: scrollDown 1.8s ease infinite;
-}
-@keyframes scrollDown {
-  0%{transform:translateY(0);opacity:1;}
-  80%{transform:translateY(10px);opacity:0;}
-  100%{transform:translateY(0);opacity:0;}
-}
-.scroll-label {
-  font-size: 9.5px;
-  letter-spacing: 2px;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-}
+
 
 
 @keyframes fadeUp {
@@ -871,11 +834,7 @@ footer::before {
     </div>
   </div>
 
-  <!-- Scroll hint -->
-  <div class="hero-scroll">
-    <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
-    <div class="scroll-label">Scroll</div>
-  </div>
+
 
   <div class="hero-accent"></div>
 </section>
