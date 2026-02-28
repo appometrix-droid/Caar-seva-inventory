@@ -61,57 +61,102 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
 .layout{display:flex;align-items:flex-start;min-height:calc(100vh - var(--top-h));}
 
 /* ═══════════════════ SIDEBAR (desktop/tablet) ═══════════════════ */
+:root { --sidebar-w: 250px; }
+
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--white);border-right:1px solid var(--border);
   position:sticky;top:var(--top-h);
   height:calc(100vh - var(--top-h));
-  overflow-y:auto;padding:16px 14px 32px;
-  display:flex;flex-direction:column;gap:20px;
+  overflow-y:auto;
+  display:flex;flex-direction:column;
 }
 .sidebar::-webkit-scrollbar{width:3px;}
 .sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-.sb-section{display:flex;flex-direction:column;gap:8px;}
-.sb-label{
-  font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;
-  letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);
-  padding-bottom:6px;border-bottom:1px solid var(--border);
-}
-.sb-pills{display:flex;flex-direction:column;gap:4px;}
-.sb-pill{
-  background:none;border:1.5px solid var(--border);border-radius:7px;
-  padding:7px 11px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;
-  color:var(--ink2);cursor:pointer;text-align:left;transition:all .18s;width:100%;
-}
-.sb-pill:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
-.sb-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
-
-.sb-sort-pill{
-  background:none;border:1.5px solid var(--border);border-radius:7px;
-  padding:7px 11px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;
-  color:var(--ink2);cursor:pointer;text-align:left;transition:all .18s;width:100%;
-}
-.sb-sort-pill:hover{border-color:var(--ink);color:var(--ink);}
-.sb-sort-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+/* ── Top section: results + quick pills ── */
+.sb-top{padding:14px 14px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
 
 .sb-results{font-size:12px;color:var(--muted);}
 .sb-results strong{color:var(--ink);font-weight:700;}
+
+.sb-quick-label{
+  font-family:'Nunito',sans-serif;font-size:9.5px;font-weight:800;
+  letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);
+}
+
+/* Quick pills — horizontal wrap */
+.sb-quick-pills{display:flex;flex-wrap:wrap;gap:5px;}
+.sb-qpill{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:20px;
+  padding:4px 11px;font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:700;
+  color:var(--ink2);cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.sb-qpill:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
+.sb-qpill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
 .sb-clear{
-  background:none;border:none;color:var(--muted);font-size:12px;
-  font-family:'Nunito Sans',sans-serif;cursor:pointer;text-align:left;
-  padding:0;transition:color .18s;
+  background:none;border:none;color:var(--muted);font-size:11.5px;
+  font-family:'Nunito Sans',sans-serif;cursor:pointer;padding:0;
+  transition:color .18s;text-align:left;
 }
 .sb-clear:hover{color:var(--red);}
 
-/* ── Price Slider (sidebar) ── */
-.price-slider-wrap{padding:4px 2px 8px;}
-.price-range-label{
-  display:flex;justify-content:space-between;
-  font-size:11.5px;font-weight:700;color:var(--ink2);
-  font-family:'Nunito',sans-serif;margin-bottom:10px;
+/* ── Accordion section ── */
+.sb-accordion{flex:1;overflow-y:auto;}
+.sb-accordion::-webkit-scrollbar{display:none;}
+
+.acc-row{border-bottom:1px solid var(--border);}
+
+.acc-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;
+  color:var(--ink);background:var(--white);
+  transition:background .15s;
+  user-select:none;
 }
-.price-range-label span{color:var(--red);}
+.acc-header:hover{background:#FAFAFA;}
+.acc-header.has-val .acc-name{color:var(--red);}
+
+.acc-name{flex:1;}
+.acc-badge{
+  font-size:10px;font-weight:800;color:var(--red);
+  background:var(--red-l);border-radius:10px;padding:1px 7px;margin-right:6px;
+  display:none;
+}
+.acc-header.has-val .acc-badge{display:inline;}
+
+.acc-chevron{
+  width:18px;height:18px;flex-shrink:0;
+  transition:transform .25s;color:var(--muted);
+}
+.acc-row.open .acc-chevron{transform:rotate(180deg);}
+
+.acc-body{
+  display:none;padding:0 14px 14px;
+  flex-direction:column;gap:5px;
+  background:var(--bg);
+}
+.acc-row.open .acc-body{display:flex;}
+
+/* Pills inside accordion */
+.acc-pill{
+  background:var(--white);border:1.5px solid var(--border);border-radius:7px;
+  padding:7px 11px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;
+  color:var(--ink2);cursor:pointer;text-align:left;transition:all .18s;width:100%;
+}
+.acc-pill:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
+.acc-pill.active{border-color:var(--red);color:var(--red);background:var(--red-l);}
+
+/* Price slider in accordion */
+.price-slider-wrap{padding:6px 2px 4px;}
+.price-range-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11.5px;font-weight:700;color:var(--ink2);
+  font-family:'Nunito',sans-serif;margin-bottom:12px;
+}
+.prl-val{color:var(--red);font-size:12px;font-weight:800;}
 .dual-slider{position:relative;height:28px;display:flex;align-items:center;}
 .dual-slider input[type=range]{
   position:absolute;width:100%;height:4px;
@@ -132,13 +177,8 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
   box-shadow:0 1px 6px rgba(232,37,26,.35);
   pointer-events:auto;cursor:pointer;
 }
-.slider-track{
-  position:absolute;left:0;right:0;height:4px;
-  background:var(--border);border-radius:2px;z-index:0;
-}
-.slider-fill{
-  position:absolute;height:4px;background:var(--red);border-radius:2px;z-index:1;
-}
+.slider-track{position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;z-index:0;}
+.slider-fill{position:absolute;height:4px;background:var(--red);border-radius:2px;z-index:1;}
 
 /* ═══════════════════ MOBILE FILTER BAR ═══════════════════ */
 .mob-bar{
@@ -521,50 +561,85 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
-    <div class="sb-results" id="sbResults">All vehicles</div>
-
-    <!-- Fuel -->
-    <div class="sb-section">
-      <div class="sb-label">Fuel Type</div>
-      <div class="sb-pills" id="sbFuelPills"></div>
+    <!-- Top: results count + quick fuel/trans pills -->
+    <div class="sb-top">
+      <div class="sb-results" id="sbResults">All vehicles</div>
+      <div class="sb-quick-label">Quick Filter</div>
+      <div class="sb-quick-pills" id="sbQuickFuel"></div>
+      <div class="sb-quick-pills" id="sbQuickTrans"></div>
+      <button class="sb-clear" onclick="clearAll()">✕ Clear all filters</button>
     </div>
 
-    <!-- Transmission -->
-    <div class="sb-section">
-      <div class="sb-label">Transmission</div>
-      <div class="sb-pills" id="sbTransPills"></div>
-    </div>
+    <!-- Accordion filters -->
+    <div class="sb-accordion" id="sbAccordion">
 
-    <!-- Price slider sidebar -->
-    <div class="sb-section">
-      <div class="sb-label">Price Range</div>
-      <div class="price-slider-wrap">
-        <div class="price-range-label">
-          <span>₹<span id="sbPriceMinL">0</span></span>
-          <span id="sbPriceRangeLabel" style="color:var(--red);font-weight:800;font-size:12px;">Any Price</span>
-          <span>₹<span id="sbPriceMaxL">50L+</span></span>
+      <!-- Sort -->
+      <div class="acc-row open" id="accSort">
+        <div class="acc-header" onclick="toggleAcc('accSort')">
+          <span class="acc-name">Sort By</span>
+          <span class="acc-badge" id="accSortBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
-        <div class="dual-slider" id="sbDualSlider">
-          <div class="slider-track"></div>
-          <div class="slider-fill" id="sbSliderFill"></div>
-          <input type="range" id="sbRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onSbRange()">
-          <input type="range" id="sbRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onSbRange()">
+        <div class="acc-body">
+          <button class="acc-pill active" onclick="setSbSort('default',this)">Latest First</button>
+          <button class="acc-pill" onclick="setSbSort('price-asc',this)">Price: Low → High</button>
+          <button class="acc-pill" onclick="setSbSort('price-desc',this)">Price: High → Low</button>
+          <button class="acc-pill" onclick="setSbSort('km-asc',this)">Lowest KM First</button>
         </div>
       </div>
-    </div>
 
-    <!-- Sort -->
-    <div class="sb-section">
-      <div class="sb-label">Sort By</div>
-      <div class="sb-pills" id="sbSortPills">
-        <button class="sb-sort-pill active" onclick="setSbSort('default',this)">Latest First</button>
-        <button class="sb-sort-pill" onclick="setSbSort('price-asc',this)">Price: Low → High</button>
-        <button class="sb-sort-pill" onclick="setSbSort('price-desc',this)">Price: High → Low</button>
-        <button class="sb-sort-pill" onclick="setSbSort('km-asc',this)">Lowest KM First</button>
+      <!-- Price Range -->
+      <div class="acc-row open" id="accPrice">
+        <div class="acc-header" onclick="toggleAcc('accPrice')">
+          <span class="acc-name">Price Range</span>
+          <span class="acc-badge" id="accPriceBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="acc-body">
+          <div class="price-slider-wrap">
+            <div class="price-range-label">
+              <span>₹<span id="sbPriceMinL">0</span></span>
+              <span class="prl-val" id="sbPriceRangeLabel">Any Price</span>
+              <span>₹<span id="sbPriceMaxL">50L+</span></span>
+            </div>
+            <div class="dual-slider">
+              <div class="slider-track"></div>
+              <div class="slider-fill" id="sbSliderFill"></div>
+              <input type="range" id="sbRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onSbRange()">
+              <input type="range" id="sbRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onSbRange()">
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <button class="sb-clear" onclick="clearAll()">✕ Clear all filters</button>
+      <!-- Fuel -->
+      <div class="acc-row" id="accFuel">
+        <div class="acc-header" onclick="toggleAcc('accFuel')">
+          <span class="acc-name">Fuel Type</span>
+          <span class="acc-badge" id="accFuelBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="acc-body" id="accFuelBody">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Transmission -->
+      <div class="acc-row" id="accTrans">
+        <div class="acc-header" onclick="toggleAcc('accTrans')">
+          <span class="acc-name">Transmission</span>
+          <span class="acc-badge" id="accTransBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="acc-body" id="accTransBody">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Extra accordion rows injected by JS for future columns -->
+      <div id="accExtra"></div>
+
+    </div><!-- /sb-accordion -->
 
   </aside>
 
@@ -696,19 +771,37 @@ function fmtPrice(v) {
   return '₹' + v;
 }
 
+// ── ACCORDION TOGGLE ──
+function toggleAcc(id) {
+  const row = document.getElementById(id);
+  row.classList.toggle('open');
+}
+
 // ── BUILD SIDEBAR ──
 function buildSidebar() {
   const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
   const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
 
-  document.getElementById('sbFuelPills').innerHTML =
+  // Quick pills (top section)
+  const qf = document.getElementById('sbQuickFuel');
+  const qt = document.getElementById('sbQuickTrans');
+  qf.innerHTML = fuels.map(f=>
+    `<button class="sb-qpill" data-fuel="${f}" onclick="setSbFuelQ('${f}',this)">${f}</button>`
+  ).join('');
+  qt.innerHTML = trans.map(t=>
+    `<button class="sb-qpill" data-trans="${t}" onclick="setSbTransQ('${t}',this)">${t}</button>`
+  ).join('');
+
+  // Accordion: Fuel body
+  document.getElementById('accFuelBody').innerHTML =
     ['', ...fuels].map((f,i)=>
-      `<button class="sb-pill${i===0?' active':''}" onclick="setSbFuel('${f}',this)">${f||'Any'}</button>`
+      `<button class="acc-pill${i===0?' active':''}" data-fuel="${f}" onclick="setSbFuelAcc('${f}',this)">${f||'Any'}</button>`
     ).join('');
 
-  document.getElementById('sbTransPills').innerHTML =
+  // Accordion: Trans body
+  document.getElementById('accTransBody').innerHTML =
     ['', ...trans].map((t,i)=>
-      `<button class="sb-pill${i===0?' active':''}" onclick="setSbTrans('${t}',this)">${t||'Any'}</button>`
+      `<button class="acc-pill${i===0?' active':''}" data-trans="${t}" onclick="setSbTransAcc('${t}',this)">${t||'Any'}</button>`
     ).join('');
 
   updateSbSlider();
@@ -759,20 +852,85 @@ function buildPopupOptions() {
 // ══════════════════════════════════════
 //  SIDEBAR HANDLERS
 // ══════════════════════════════════════
-function setSbFuel(v,btn) {
-  S.fuel=v;
-  document.querySelectorAll('#sbFuelPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',b===btn));
+
+// Quick pill — fuel (top section, single select, acts as toggle)
+function setSbFuelQ(v, btn) {
+  if (S.fuel === v) {
+    // toggle off
+    S.fuel = '';
+    btn.classList.remove('active');
+  } else {
+    S.fuel = v;
+    document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  // sync accordion
+  syncAccFuel();
   applyFilters();
 }
-function setSbTrans(v,btn) {
-  S.trans=v;
-  document.querySelectorAll('#sbTransPills .sb-pill').forEach(b=>b.classList.toggle('active',b===btn));
+
+// Quick pill — trans
+function setSbTransQ(v, btn) {
+  if (S.trans === v) {
+    S.trans = '';
+    btn.classList.remove('active');
+  } else {
+    S.trans = v;
+    document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  syncAccTrans();
   applyFilters();
 }
-function setSbSort(v,btn) {
-  S.sort=v;
-  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach(b=>b.classList.toggle('active',b===btn));
+
+// Accordion pill — fuel
+function setSbFuelAcc(v, btn) {
+  S.fuel = v;
+  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  // sync quick pills
+  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===v));
+  updateAccBadge('accFuel','accFuelBadge', v);
   applyFilters();
+}
+
+// Accordion pill — trans
+function setSbTransAcc(v, btn) {
+  S.trans = v;
+  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.toggle('active', b.dataset.trans===v));
+  updateAccBadge('accTrans','accTransBadge', v);
+  applyFilters();
+}
+
+function setSbSort(v, btn) {
+  S.sort = v;
+  document.querySelectorAll('#accSort .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  const labels = {default:'Latest','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
+  updateAccBadge('accSort','accSortBadge', v !== 'default' ? labels[v] : '');
+  applyFilters();
+}
+
+function syncAccFuel() {
+  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===S.fuel));
+  updateAccBadge('accFuel','accFuelBadge', S.fuel);
+}
+function syncAccTrans() {
+  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.trans===S.trans));
+  updateAccBadge('accTrans','accTransBadge', S.trans);
+}
+
+function updateAccBadge(rowId, badgeId, val) {
+  const row    = document.getElementById(rowId);
+  const badge  = document.getElementById(badgeId);
+  const header = row ? row.querySelector('.acc-header') : null;
+  if (!badge || !header) return;
+  if (val) {
+    badge.textContent = val;
+    header.classList.add('has-val');
+  } else {
+    badge.textContent = '';
+    header.classList.remove('has-val');
+  }
 }
 
 // Sidebar price slider
@@ -782,6 +940,8 @@ function onSbRange() {
   if (mn > mx) { const t=mn; mn=mx; mx=t; }
   S.priceMin = mn; S.priceMax = mx;
   updateSbSlider();
+  const priceActive = mn>0||mx<MAX_PRICE;
+  updateAccBadge('accPrice','accPriceBadge', priceActive ? fmtPrice(mn)+'–'+(mx>=MAX_PRICE?'50L+':fmtPrice(mx)) : '');
   applyFilters();
 }
 function updateSbSlider() {
@@ -879,15 +1039,17 @@ function updatePopSlider() {
 function applyPopup() {
   S = { ...S, ...P };
   updateSbSlider();
-  // Sync sidebar pills
-  document.querySelectorAll('#sbFuelPills .sb-pill').forEach(b=>
-    b.classList.toggle('active', b.textContent===(S.fuel||'Any')));
-  document.querySelectorAll('#sbTransPills .sb-pill').forEach(b=>
-    b.classList.toggle('active', b.textContent===(S.trans||'Any')));
-  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach((b,i)=>{
-    const sorts=['default','price-asc','price-desc','km-asc'];
+  // Sync accordion + quick pills
+  syncAccFuel(); syncAccTrans();
+  document.querySelectorAll('#accSort .acc-pill').forEach(b=>{
+    const sorts={0:'default',1:'price-asc',2:'price-desc',3:'km-asc'};
+    const i=[...b.parentNode.children].indexOf(b);
     b.classList.toggle('active', sorts[i]===S.sort);
   });
+  const sortLabels={default:'','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
+  updateAccBadge('accSort','accSortBadge', sortLabels[S.sort]||'');
+  const priceActive = S.priceMin>0||S.priceMax<MAX_PRICE;
+  updateAccBadge('accPrice','accPriceBadge', priceActive ? fmtPrice(S.priceMin)+'–'+fmtPrice(S.priceMax) : '');
   // Update filter button indicator
   const hasFilter = S.fuel||S.trans||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
   document.getElementById('mobFilterBtn').classList.toggle('has-filter', !!hasFilter);
@@ -916,9 +1078,19 @@ function onSearch() {
 function clearAll() {
   S = { search:'', fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
   document.getElementById('searchInput').value='';
-  document.querySelectorAll('#sbFuelPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
-  document.querySelectorAll('#sbTransPills .sb-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
-  document.querySelectorAll('#sbSortPills .sb-sort-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  // Accordion pills
+  document.querySelectorAll('#accFuelBody .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#accTransBody .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#accSort .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  // Quick pills
+  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
+  // Badges
+  updateAccBadge('accFuel','accFuelBadge','');
+  updateAccBadge('accTrans','accTransBadge','');
+  updateAccBadge('accSort','accSortBadge','');
+  updateAccBadge('accPrice','accPriceBadge','');
+  // Mobile
   document.querySelectorAll('.mob-chip').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.getElementById('mobFilterBtn').classList.remove('has-filter');
   updateSbSlider();
