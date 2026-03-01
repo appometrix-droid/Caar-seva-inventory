@@ -546,6 +546,22 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
         </div>
       </div>
 
+      <!-- Body Type -->
+      <div class="popup-section">
+        <span class="popup-section-label">Body Type</span>
+        <div class="popup-pills" id="popBodyPills">
+          <button class="popup-pill active" data-body="" onclick="setPopBody('',this)">Any</button>
+        </div>
+      </div>
+
+      <!-- Colour -->
+      <div class="popup-section">
+        <span class="popup-section-label">Colour</span>
+        <div class="popup-pills" id="popColourPills">
+          <button class="popup-pill active" data-colour="" onclick="setPopColour('',this)">Any</button>
+        </div>
+      </div>
+
     </div><!-- /popup-body -->
 
     <div class="popup-footer">
@@ -682,6 +698,8 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
         <div class="dp-title" id="dpTitle"></div>
         <div class="dp-make"  id="dpMake"></div>
         <div class="dp-specs" id="dpSpecs"></div>
+        <div id="dpFeatures"></div>
+        <div id="dpSafety"></div>
         <div class="dp-cta">
           <a class="dp-wa" id="dpWa" href="#" target="_blank" rel="noopener">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -700,7 +718,7 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
 <!-- ═══════════ SCRIPT ═══════════ -->
 <script>
 // ── CONFIG ──────────────────────────────────────────
-const CSV_URL      = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEtyC-33DYGbjgHDEfAR5OSgJkg2qMGDkNL5ezQgLuw4utD4CGoCvW0x1iNcLFLi-JnTarUkK3uZmB/pub?output=csv";
+const CSV_URL      = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQcxhUjWUi_hXK2ShMxTQVekcoyjXeBlVOJ2i2vwYJmnSfNBZoSNOGO0XJSTfKGRFwQTCwA8Mg2e6kn/pub?output=csv";
 const WA_NUMBER    = "919999999999";   // ← your WhatsApp number
 const DEALER_PHONE = "9999999999";     // ← your call number
 const MAX_PRICE    = 5000000;          // slider max (50 lakh)
@@ -710,7 +728,7 @@ let allCars  = [];
 let dpImages = [], dpIdx = 0;
 
 // Shared filter state
-let S = { search:'', fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+let S = { search:'', fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
 
 // Popup temp state (only committed on "Apply")
 let P = {};
@@ -736,14 +754,18 @@ function parseCSV(raw) {
   const lines = raw.trim().split('\n').slice(1);
   allCars = lines.map((ln,i)=>{
     const cols   = csvSplit(ln);
-    const photos = cols.slice(9).map(p=>fixDriveUrl(p)).filter(Boolean);
+    const photos = cols.slice(17,37).map(p=>fixDriveUrl(p)).filter(Boolean);
     return {
       id:       i,
       model:    cl(cols[1]), variant: cl(cols[2]), make: cl(cols[3]),
-      fuel:     cl(cols[4]), trans:   cl(cols[5]),
-      odometer: parseInt((cl(cols[6])||'0').replace(/\D/g,''))||0,
-      price:    parseInt((cl(cols[7])||'0').replace(/\D/g,''))||0,
-      status:   cl(cols[8]), photos
+      category: cl(cols[4]), bodyType: cl(cols[5]),
+      fuel:     cl(cols[6]), trans:    cl(cols[7]),
+      colour:   cl(cols[8]), seats:    cl(cols[9]),
+      owners:   cl(cols[10]),features: cl(cols[11]),
+      airbags:  cl(cols[12]),safety:   cl(cols[13]),
+      odometer: parseInt((cl(cols[14])||'0').replace(/\D/g,''))||0,
+      price:    parseInt((cl(cols[15])||'0').replace(/\D/g,''))||0,
+      status:   cl(cols[16]), photos
     };
   }).filter(c=>c.model);
 
@@ -779,10 +801,12 @@ function toggleAcc(id) {
 
 // ── BUILD SIDEBAR ──
 function buildSidebar() {
-  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
-  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+  const fuels   = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
+  const trans   = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+  const bodies  = [...new Set(allCars.map(c=>c.bodyType).filter(Boolean))].sort();
+  const colours = [...new Set(allCars.map(c=>c.colour).filter(Boolean))].sort();
 
-  // Quick pills (top section)
+  // Quick pills (top section) — fuel + trans
   const qf = document.getElementById('sbQuickFuel');
   const qt = document.getElementById('sbQuickTrans');
   qf.innerHTML = fuels.map(f=>
@@ -803,6 +827,30 @@ function buildSidebar() {
     ['', ...trans].map((t,i)=>
       `<button class="acc-pill${i===0?' active':''}" data-trans="${t}" onclick="setSbTransAcc('${t}',this)">${t||'Any'}</button>`
     ).join('');
+
+  // Inject Body Type + Colour accordion rows into #accExtra
+  const extra = document.getElementById('accExtra');
+  extra.innerHTML = `
+    <div class="acc-row" id="accBody">
+      <div class="acc-header" onclick="toggleAcc('accBody')">
+        <span class="acc-name">Body Type</span>
+        <span class="acc-badge" id="accBodyBadge"></span>
+        <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="acc-body" id="accBodyBody">
+        ${['', ...bodies].map((b,i)=>`<button class="acc-pill${i===0?' active':''}" data-body="${b}" onclick="setSbBodyAcc('${b}',this)">${b||'Any'}</button>`).join('')}
+      </div>
+    </div>
+    <div class="acc-row" id="accColour">
+      <div class="acc-header" onclick="toggleAcc('accColour')">
+        <span class="acc-name">Colour</span>
+        <span class="acc-badge" id="accColourBadge"></span>
+        <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="acc-body" id="accColourBody">
+        ${['', ...colours].map((c,i)=>`<button class="acc-pill${i===0?' active':''}" data-colour="${c}" onclick="setSbColourAcc('${c}',this)">${c||'Any'}</button>`).join('')}
+      </div>
+    </div>`;
 
   updateSbSlider();
 }
@@ -827,24 +875,27 @@ function buildMobChips() {
 
 // ── BUILD POPUP OPTIONS ──
 function buildPopupOptions() {
-  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
-  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
-  const fp    = document.getElementById('popFuelPills');
-  const tp    = document.getElementById('popTransPills');
+  const fuels   = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
+  const trans   = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
+  const bodies  = [...new Set(allCars.map(c=>c.bodyType).filter(Boolean))].sort();
+  const colours = [...new Set(allCars.map(c=>c.colour).filter(Boolean))].sort();
+
+  const fp = document.getElementById('popFuelPills');
+  const tp = document.getElementById('popTransPills');
+  const bp = document.getElementById('popBodyPills');
+  const cp = document.getElementById('popColourPills');
 
   fp.innerHTML = `<button class="popup-pill active" data-fuel="" onclick="setPopFuel('',this)">Any</button>`;
-  fuels.forEach(f=>{
-    const b=document.createElement('button');
-    b.className='popup-pill';b.dataset.fuel=f;b.textContent=f;
-    b.onclick=()=>setPopFuel(f,b);fp.appendChild(b);
-  });
+  fuels.forEach(f=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.fuel=f;b.textContent=f;b.onclick=()=>setPopFuel(f,b);fp.appendChild(b); });
 
   tp.innerHTML = `<button class="popup-pill active" data-trans="" onclick="setPopTrans('',this)">Any</button>`;
-  trans.forEach(t=>{
-    const b=document.createElement('button');
-    b.className='popup-pill';b.dataset.trans=t;b.textContent=t;
-    b.onclick=()=>setPopTrans(t,b);tp.appendChild(b);
-  });
+  trans.forEach(t=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.trans=t;b.textContent=t;b.onclick=()=>setPopTrans(t,b);tp.appendChild(b); });
+
+  bp.innerHTML = `<button class="popup-pill active" data-body="" onclick="setPopBody('',this)">Any</button>`;
+  bodies.forEach(v=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.body=v;b.textContent=v;b.onclick=()=>setPopBody(v,b);bp.appendChild(b); });
+
+  cp.innerHTML = `<button class="popup-pill active" data-colour="" onclick="setPopColour('',this)">Any</button>`;
+  colours.forEach(v=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.colour=v;b.textContent=v;b.onclick=()=>setPopColour(v,b);cp.appendChild(b); });
 
   updatePopSlider();
 }
@@ -910,6 +961,26 @@ function setSbSort(v, btn) {
   applyFilters();
 }
 
+function setSbBodyAcc(v, btn) {
+  S.bodyType = v;
+  document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  updateAccBadge('accBody','accBodyBadge', v);
+  applyFilters();
+}
+function setSbColourAcc(v, btn) {
+  S.colour = v;
+  document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  updateAccBadge('accColour','accColourBadge', v);
+  applyFilters();
+}
+function setPopBody(v, btn) {
+  P.bodyType = v;
+  document.querySelectorAll('#popBodyPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function setPopColour(v, btn) {
+  P.colour = v;
+  document.querySelectorAll('#popColourPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
 function syncAccFuel() {
   document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===S.fuel));
   updateAccBadge('accFuel','accFuelBadge', S.fuel);
@@ -988,16 +1059,11 @@ function overlayClose(e) {
 }
 
 function syncPopupUI() {
-  // Sort
-  document.querySelectorAll('#popSortPills .popup-pill').forEach(b=>
-    b.classList.toggle('active', b.dataset.sort===P.sort));
-  // Fuel
-  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>
-    b.classList.toggle('active', b.dataset.fuel===P.fuel));
-  // Trans
-  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>
-    b.classList.toggle('active', b.dataset.trans===P.trans));
-  // Slider
+  document.querySelectorAll('#popSortPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.sort===P.sort));
+  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===P.fuel));
+  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.trans===P.trans));
+  document.querySelectorAll('#popBodyPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.body===(P.bodyType||'')));
+  document.querySelectorAll('#popColourPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.colour===(P.colour||'')));
   document.getElementById('popRangeMin').value = P.priceMin;
   document.getElementById('popRangeMax').value = P.priceMax;
   updatePopSlider();
@@ -1041,6 +1107,12 @@ function applyPopup() {
   updateSbSlider();
   // Sync accordion + quick pills
   syncAccFuel(); syncAccTrans();
+  if(document.getElementById('accBodyBody'))
+    document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.body===(S.bodyType||'')));
+  updateAccBadge('accBody','accBodyBadge', S.bodyType||'');
+  if(document.getElementById('accColourBody'))
+    document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.colour===(S.colour||'')));
+  updateAccBadge('accColour','accColourBadge', S.colour||'');
   document.querySelectorAll('#accSort .acc-pill').forEach(b=>{
     const sorts={0:'default',1:'price-asc',2:'price-desc',3:'km-asc'};
     const i=[...b.parentNode.children].indexOf(b);
@@ -1051,14 +1123,14 @@ function applyPopup() {
   const priceActive = S.priceMin>0||S.priceMax<MAX_PRICE;
   updateAccBadge('accPrice','accPriceBadge', priceActive ? fmtPrice(S.priceMin)+'–'+fmtPrice(S.priceMax) : '');
   // Update filter button indicator
-  const hasFilter = S.fuel||S.trans||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
+  const hasFilter = S.fuel||S.trans||S.bodyType||S.colour||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
   document.getElementById('mobFilterBtn').classList.toggle('has-filter', !!hasFilter);
   closePopup();
   applyFilters();
 }
 
 function resetPopup() {
-  P = { search:S.search, fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  P = { search:S.search, fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
   document.getElementById('popRangeMin').value = 0;
   document.getElementById('popRangeMax').value = MAX_PRICE;
   syncPopupUI();
@@ -1076,7 +1148,7 @@ function onSearch() {
 //  CLEAR ALL
 // ══════════════════════════════════════
 function clearAll() {
-  S = { search:'', fuel:'', trans:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  S = { search:'', fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
   document.getElementById('searchInput').value='';
   // Accordion pills
   document.querySelectorAll('#accFuelBody .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
@@ -1104,8 +1176,10 @@ function applyFilters() {
   let cars = allCars.filter(c=>{
     const txt=`${c.model} ${c.variant} ${c.make}`.toLowerCase();
     if(S.search && !txt.includes(S.search)) return false;
-    if(S.fuel   && c.fuel!==S.fuel)         return false;
-    if(S.trans  && c.trans!==S.trans)       return false;
+    if(S.fuel     && c.fuel!==S.fuel)         return false;
+    if(S.trans    && c.trans!==S.trans)       return false;
+    if(S.bodyType && c.bodyType!==S.bodyType) return false;
+    if(S.colour   && c.colour!==S.colour)     return false;
     if(S.priceMin>0 && c.price<S.priceMin)  return false;
     if(S.priceMax<MAX_PRICE && c.price>S.priceMax) return false;
     return true;
@@ -1148,9 +1222,11 @@ function renderGrid(cars) {
         ${c.make?`<div class="car-make">${x(c.make)}</div>`:''}
         <div class="car-title">${x(title)||'Unnamed Vehicle'}</div>
         <div class="specs">
-          ${c.fuel ?`<span class="spec">⛽ ${x(c.fuel)}</span>`:''}
-          ${c.trans?`<span class="spec">⚙️ ${x(c.trans)}</span>`:''}
-          ${km     ?`<span class="spec">🕐 ${km}</span>`:''}
+          ${c.fuel    ?`<span class="spec">⛽ ${x(c.fuel)}</span>`:''}
+          ${c.trans   ?`<span class="spec">⚙️ ${x(c.trans)}</span>`:''}
+          ${km        ?`<span class="spec">🕐 ${km}</span>`:''}
+          ${c.bodyType?`<span class="spec">🚘 ${x(c.bodyType)}</span>`:''}
+          ${c.colour  ?`<span class="spec">🎨 ${x(c.colour)}</span>`:''}
         </div>
         <div class="card-foot">
           ${pStr?`<div class="price">${pStr}</div>`:`<div class="por">Price on request</div>`}
@@ -1183,12 +1259,40 @@ function openDetail(id) {
   document.getElementById('dpSoldTag').style.display=sold?'':'none';
   document.getElementById('dpTitle').textContent=title;
   document.getElementById('dpMake').textContent=car.make||'';
+  // Features block
+  const featEl = document.getElementById('dpFeatures');
+  if (car.features && featEl) {
+    const feats = car.features.split(/[,;|]/).map(f=>f.trim()).filter(Boolean);
+    if (feats.length) {
+      featEl.innerHTML = `<div style="margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;">Features</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">${feats.map(f=>`<span style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--ink2);">${x(f)}</span>`).join('')}</div>
+      </div>`;
+    } else featEl.innerHTML='';
+  } else if(featEl) featEl.innerHTML='';
+
+  // Safety features block
+  const safeEl = document.getElementById('dpSafety');
+  if (car.safety && safeEl) {
+    const safes = car.safety.split(/[,;|]/).map(s=>s.trim()).filter(Boolean);
+    if (safes.length) {
+      safeEl.innerHTML = `<div style="margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;">Safety Features</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">${safes.map(s=>`<span style="background:#F0FFF4;border:1px solid #C6F6D5;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:#276749;">🛡 ${x(s)}</span>`).join('')}</div>
+      </div>`;
+    } else safeEl.innerHTML='';
+  } else if(safeEl) safeEl.innerHTML='';
+
   document.getElementById('dpSpecs').innerHTML=[
-    {label:'Fuel Type',value:car.fuel||'—'},
-    {label:'Transmission',value:car.trans||'—'},
-    {label:'Odometer',value:km},
-    {label:'Make / Year',value:car.make||'—'},
-  ].map(s=>`<div class="dp-spec-item"><div class="dp-spec-label">${s.label}</div><div class="dp-spec-value">${s.value}</div></div>`).join('');
+    {label:'Fuel Type',    value:car.fuel||''},
+    {label:'Transmission', value:car.trans||''},
+    {label:'Odometer',     value:km},
+    {label:'Body Type',    value:car.bodyType||''},
+    {label:'Colour',       value:car.colour||''},
+    {label:'Seats',        value:car.seats ? car.seats+' Seats' : ''},
+    {label:'Owners',       value:car.owners ? car.owners+' Owner(s)' : ''},
+    {label:'Airbags',      value:car.airbags ? car.airbags+' Airbags' : ''},
+  ].filter(s=>s.value).map(s=>`<div class="dp-spec-item"><div class="dp-spec-label">${s.label}</div><div class="dp-spec-value">${s.value}</div></div>`).join('');
   document.getElementById('dpWa').href=`https://wa.me/${WA_NUMBER}?text=${waMsg}`;
   document.getElementById('dpCall').onclick=()=>{window.location.href=`tel:${DEALER_PHONE}`;};
 
