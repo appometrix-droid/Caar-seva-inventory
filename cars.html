@@ -296,6 +296,55 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
   border-radius:6px;padding:3px 10px;font-size:13px;
 }
 
+/* Sort + price always-visible strips */
+.popup-sort-strip{
+  padding:14px 18px 10px;border-bottom:1px solid var(--border);
+}
+.popup-price-strip{
+  padding:12px 18px 14px;border-bottom:1px solid var(--border);
+}
+.popup-sort-label{
+  font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);
+  margin-bottom:10px;
+}
+
+/* Popup accordion body — scrollable */
+.popup-acc-body{
+  overflow-y:auto;
+  max-height:36vh;
+}
+.popup-acc-body::-webkit-scrollbar{width:3px;}
+.popup-acc-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.popup-acc-row{border-bottom:1px solid var(--border);}
+
+.popup-acc-header{
+  display:flex;align-items:center;
+  padding:13px 18px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:700;
+  color:var(--ink);background:var(--white);
+  transition:background .15s;user-select:none;
+}
+.popup-acc-header:hover{background:#FAFAFA;}
+.popup-acc-header.has-val .popup-acc-name{color:var(--red);}
+
+.popup-acc-name{flex:1;}
+.popup-acc-badge{
+  font-size:10px;font-weight:800;color:var(--red);
+  background:var(--red-l);border-radius:10px;padding:1px 7px;margin-right:6px;
+  display:none;
+}
+.popup-acc-header.has-val .popup-acc-badge{display:inline;}
+
+.popup-acc-content{
+  display:none;
+  padding:0 18px 14px;
+  background:var(--bg);
+}
+.popup-acc-row.open .popup-acc-content{display:block;}
+.popup-acc-row.open .acc-chevron{transform:rotate(180deg);}
+
 .popup-footer{
   padding:14px 18px 0;border-top:1px solid var(--border);
   display:flex;gap:10px;
@@ -458,6 +507,62 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
 /* On desktop show live label too */
 .live-label{display:flex;}
 
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer {
+  background: #0A0A0A;
+  padding: 60px 40px 36px;
+  position: relative;
+  overflow: hidden;
+}
+footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), #ff8a80, var(--red));
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 32px;
+}
+.footer-logo-img { height: 58px; width: auto; object-fit: contain; display: block; margin-bottom: 6px; }
+.footer-brand .logo-sub { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:16px; }
+.footer-brand p { font-size:13px; color:rgba(255,255,255,0.4); line-height:1.7; max-width:280px; }
+.footer-col-title { font-family:'Nunito',sans-serif; font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:18px; }
+.footer-links { list-style:none; display:flex; flex-direction:column; gap:11px; }
+.footer-links a { font-size:13.5px; color:rgba(255,255,255,0.55); text-decoration:none; transition:color .2s; display:inline-flex; align-items:center; gap:7px; }
+.footer-links a:hover { color:#fff; }
+.socials { display:flex; gap:10px; margin-top:22px; }
+.social-btn { width:38px; height:38px; border-radius:9px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:16px; color:rgba(255,255,255,0.5); transition:all .2s; }
+.social-btn:hover { background:var(--red); border-color:var(--red); color:#fff; transform:translateY(-2px); }
+.footer-bottom { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.footer-copy { font-size:12px; color:rgba(255,255,255,0.25); }
+.footer-wa { display:inline-flex; align-items:center; gap:8px; background:rgba(37,211,102,0.12); border:1px solid rgba(37,211,102,0.25); border-radius:8px; padding:8px 16px; font-size:13px; font-weight:700; color:#25D366; text-decoration:none; font-family:'Nunito',sans-serif; transition:all .2s; }
+.footer-wa:hover { background:rgba(37,211,102,0.2); }
+
+/* Floating WA */
+.wa-float { position:fixed; bottom:28px; right:28px; z-index:800; width:58px; height:58px; background:var(--wa); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 24px rgba(37,211,102,0.45); text-decoration:none; transition:transform .2s, box-shadow .2s; animation:wafloat 3s ease-in-out infinite; }
+@keyframes wafloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+.wa-float:hover { transform:scale(1.12); box-shadow:0 8px 36px rgba(37,211,102,0.55); animation:none; }
+.wa-float svg { width:28px; height:28px; }
+
+@media(max-width:900px){
+  .footer-top { grid-template-columns:1fr 1fr; }
+  .footer-brand { grid-column:1/-1; }
+  footer { padding:50px 20px 32px; }
+}
+@media(max-width:600px){
+  .footer-top { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -501,68 +606,85 @@ body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);
       <button class="popup-close" onclick="closePopup()">✕</button>
     </div>
 
-    <div class="popup-body">
+    <!-- Sort pills always visible at top -->
+    <div class="popup-sort-strip">
+      <div class="popup-sort-label">Sort By</div>
+      <div class="popup-pills" id="popSortPills">
+        <button class="popup-pill active" data-sort="default"    onclick="setPopSort('default',this)">Latest</button>
+        <button class="popup-pill"        data-sort="price-asc"  onclick="setPopSort('price-asc',this)">Price ↑</button>
+        <button class="popup-pill"        data-sort="price-desc" onclick="setPopSort('price-desc',this)">Price ↓</button>
+        <button class="popup-pill"        data-sort="km-asc"     onclick="setPopSort('km-asc',this)">Low KM</button>
+      </div>
+    </div>
 
-      <!-- Sort -->
-      <div class="popup-section">
-        <span class="popup-section-label">Sort By</span>
-        <div class="popup-pills" id="popSortPills">
-          <button class="popup-pill active" data-sort="default"    onclick="setPopSort('default',this)">Latest</button>
-          <button class="popup-pill"        data-sort="price-asc"  onclick="setPopSort('price-asc',this)">Price ↑ Low→High</button>
-          <button class="popup-pill"        data-sort="price-desc" onclick="setPopSort('price-desc',this)">Price ↓ High→Low</button>
-          <button class="popup-pill"        data-sort="km-asc"     onclick="setPopSort('km-asc',this)">Lowest KM First</button>
+    <!-- Price slider always visible -->
+    <div class="popup-price-strip">
+      <div class="popup-sort-label">Price Range</div>
+      <div class="popup-price-label">
+        <span>₹<span id="popPriceMin">0</span></span>
+        <span class="range-val" id="popPriceRangeLabel">Any Price</span>
+        <span>₹<span id="popPriceMax">50L+</span></span>
+      </div>
+      <div class="dual-slider" id="popDualSlider">
+        <div class="slider-track"></div>
+        <div class="slider-fill" id="popSliderFill"></div>
+        <input type="range" id="popRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onRangeInput()">
+        <input type="range" id="popRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onRangeInput()">
+      </div>
+    </div>
+
+    <!-- Accordion filter rows (scrollable) -->
+    <div class="popup-acc-body">
+
+      <!-- Fuel accordion -->
+      <div class="popup-acc-row" id="paccFuel">
+        <div class="popup-acc-header" onclick="togglePopAcc('paccFuel')">
+          <span class="popup-acc-name">Fuel Type</span>
+          <span class="popup-acc-badge" id="paccFuelBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="popup-acc-content">
+          <div class="popup-pills" id="popFuelPills"></div>
         </div>
       </div>
 
-      <!-- Fuel -->
-      <div class="popup-section">
-        <span class="popup-section-label">Fuel Type</span>
-        <div class="popup-pills" id="popFuelPills">
-          <button class="popup-pill active" data-fuel="" onclick="setPopFuel('',this)">Any</button>
+      <!-- Trans accordion -->
+      <div class="popup-acc-row" id="paccTrans">
+        <div class="popup-acc-header" onclick="togglePopAcc('paccTrans')">
+          <span class="popup-acc-name">Transmission</span>
+          <span class="popup-acc-badge" id="paccTransBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="popup-acc-content">
+          <div class="popup-pills" id="popTransPills"></div>
         </div>
       </div>
 
-      <!-- Transmission -->
-      <div class="popup-section">
-        <span class="popup-section-label">Transmission</span>
-        <div class="popup-pills" id="popTransPills">
-          <button class="popup-pill active" data-trans="" onclick="setPopTrans('',this)">Any</button>
+      <!-- Body Type accordion -->
+      <div class="popup-acc-row" id="paccBody">
+        <div class="popup-acc-header" onclick="togglePopAcc('paccBody')">
+          <span class="popup-acc-name">Body Type</span>
+          <span class="popup-acc-badge" id="paccBodyBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="popup-acc-content">
+          <div class="popup-pills" id="popBodyPills"></div>
         </div>
       </div>
 
-      <!-- Price slider -->
-      <div class="popup-section">
-        <span class="popup-section-label">Price Range</span>
-        <div class="popup-price-label">
-          <span>₹<span id="popPriceMin">0</span></span>
-          <span class="range-val" id="popPriceRangeLabel">Any Price</span>
-          <span>₹<span id="popPriceMax">50L+</span></span>
+      <!-- Colour accordion -->
+      <div class="popup-acc-row" id="paccColour">
+        <div class="popup-acc-header" onclick="togglePopAcc('paccColour')">
+          <span class="popup-acc-name">Colour</span>
+          <span class="popup-acc-badge" id="paccColourBadge"></span>
+          <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </div>
-        <div class="dual-slider" id="popDualSlider">
-          <div class="slider-track"></div>
-          <div class="slider-fill" id="popSliderFill"></div>
-          <input type="range" id="popRangeMin" min="0" max="5000000" step="50000" value="0"       oninput="onRangeInput()">
-          <input type="range" id="popRangeMax" min="0" max="5000000" step="50000" value="5000000" oninput="onRangeInput()">
+        <div class="popup-acc-content">
+          <div class="popup-pills" id="popColourPills"></div>
         </div>
       </div>
 
-      <!-- Body Type -->
-      <div class="popup-section">
-        <span class="popup-section-label">Body Type</span>
-        <div class="popup-pills" id="popBodyPills">
-          <button class="popup-pill active" data-body="" onclick="setPopBody('',this)">Any</button>
-        </div>
-      </div>
-
-      <!-- Colour -->
-      <div class="popup-section">
-        <span class="popup-section-label">Colour</span>
-        <div class="popup-pills" id="popColourPills">
-          <button class="popup-pill active" data-colour="" onclick="setPopColour('',this)">Any</button>
-        </div>
-      </div>
-
-    </div><!-- /popup-body -->
+    </div><!-- /popup-acc-body -->
 
     <div class="popup-footer">
       <button class="popup-reset" onclick="resetPopup()">Reset</button>
@@ -728,7 +850,7 @@ let allCars  = [];
 let dpImages = [], dpIdx = 0;
 
 // Shared filter state
-let S = { search:'', fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+let S = { search:'', fuel:[], trans:[], bodyType:[], colour:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
 
 // Popup temp state (only committed on "Apply")
 let P = {};
@@ -816,16 +938,16 @@ function buildSidebar() {
     `<button class="sb-qpill" data-trans="${t}" onclick="setSbTransQ('${t}',this)">${t}</button>`
   ).join('');
 
-  // Accordion: Fuel body
+  // Accordion: Fuel body (multi-select, no Any pill)
   document.getElementById('accFuelBody').innerHTML =
-    ['', ...fuels].map((f,i)=>
-      `<button class="acc-pill${i===0?' active':''}" data-fuel="${f}" onclick="setSbFuelAcc('${f}',this)">${f||'Any'}</button>`
+    fuels.map(f=>
+      `<button class="acc-pill" data-fuel="${f}" onclick="setSbFuelAcc('${f}',this)">${f}</button>`
     ).join('');
 
-  // Accordion: Trans body
+  // Accordion: Trans body (multi-select)
   document.getElementById('accTransBody').innerHTML =
-    ['', ...trans].map((t,i)=>
-      `<button class="acc-pill${i===0?' active':''}" data-trans="${t}" onclick="setSbTransAcc('${t}',this)">${t||'Any'}</button>`
+    trans.map(t=>
+      `<button class="acc-pill" data-trans="${t}" onclick="setSbTransAcc('${t}',this)">${t}</button>`
     ).join('');
 
   // Inject Body Type + Colour accordion rows into #accExtra
@@ -838,7 +960,7 @@ function buildSidebar() {
         <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="acc-body" id="accBodyBody">
-        ${['', ...bodies].map((b,i)=>`<button class="acc-pill${i===0?' active':''}" data-body="${b}" onclick="setSbBodyAcc('${b}',this)">${b||'Any'}</button>`).join('')}
+        ${bodies.map(b=>`<button class="acc-pill" data-body="${b}" onclick="setSbBodyAcc('${b}',this)">${b}</button>`).join('')}
       </div>
     </div>
     <div class="acc-row" id="accColour">
@@ -848,7 +970,7 @@ function buildSidebar() {
         <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="acc-body" id="accColourBody">
-        ${['', ...colours].map((c,i)=>`<button class="acc-pill${i===0?' active':''}" data-colour="${c}" onclick="setSbColourAcc('${c}',this)">${c||'Any'}</button>`).join('')}
+        ${colours.map(c=>`<button class="acc-pill" data-colour="${c}" onclick="setSbColourAcc('${c}',this)">${c}</button>`).join('')}
       </div>
     </div>`;
 
@@ -885,123 +1007,145 @@ function buildPopupOptions() {
   const bp = document.getElementById('popBodyPills');
   const cp = document.getElementById('popColourPills');
 
-  fp.innerHTML = `<button class="popup-pill active" data-fuel="" onclick="setPopFuel('',this)">Any</button>`;
+  fp.innerHTML = '';
   fuels.forEach(f=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.fuel=f;b.textContent=f;b.onclick=()=>setPopFuel(f,b);fp.appendChild(b); });
 
-  tp.innerHTML = `<button class="popup-pill active" data-trans="" onclick="setPopTrans('',this)">Any</button>`;
+  tp.innerHTML = '';
   trans.forEach(t=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.trans=t;b.textContent=t;b.onclick=()=>setPopTrans(t,b);tp.appendChild(b); });
 
-  bp.innerHTML = `<button class="popup-pill active" data-body="" onclick="setPopBody('',this)">Any</button>`;
+  bp.innerHTML = '';
   bodies.forEach(v=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.body=v;b.textContent=v;b.onclick=()=>setPopBody(v,b);bp.appendChild(b); });
 
-  cp.innerHTML = `<button class="popup-pill active" data-colour="" onclick="setPopColour('',this)">Any</button>`;
+  cp.innerHTML = '';
   colours.forEach(v=>{ const b=document.createElement('button');b.className='popup-pill';b.dataset.colour=v;b.textContent=v;b.onclick=()=>setPopColour(v,b);cp.appendChild(b); });
 
   updatePopSlider();
 }
 
 // ══════════════════════════════════════
+//  MULTI-SELECT HELPERS
+// ══════════════════════════════════════
+
+// Toggle a value in/out of an array
+function toggleArr(arr, val) {
+  const i = arr.indexOf(val);
+  if (i === -1) arr.push(val);
+  else arr.splice(i, 1);
+  return arr;
+}
+
+// Badge text: show count if >1, else show value, else ''
+function badgeText(arr) {
+  if (!arr || !arr.length) return '';
+  if (arr.length === 1) return arr[0];
+  return arr.length + ' selected';
+}
+
+function updateAccBadge(rowId, badgeId, arr) {
+  const row    = document.getElementById(rowId);
+  const badge  = document.getElementById(badgeId);
+  const header = row ? row.querySelector('.acc-header') : null;
+  if (!badge || !header) return;
+  const txt = Array.isArray(arr) ? badgeText(arr) : arr; // allow plain string for sort/price
+  if (txt) {
+    badge.textContent = txt;
+    header.classList.add('has-val');
+  } else {
+    badge.textContent = '';
+    header.classList.remove('has-val');
+  }
+}
+
+// ══════════════════════════════════════
 //  SIDEBAR HANDLERS
 // ══════════════════════════════════════
 
-// Quick pill — fuel (top section, single select, acts as toggle)
+// Quick pill — fuel (multi-select toggle)
 function setSbFuelQ(v, btn) {
-  if (S.fuel === v) {
-    // toggle off
-    S.fuel = '';
-    btn.classList.remove('active');
-  } else {
-    S.fuel = v;
-    document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-  // sync accordion
+  toggleArr(S.fuel, v);
+  btn.classList.toggle('active', S.fuel.includes(v));
   syncAccFuel();
   applyFilters();
 }
 
-// Quick pill — trans
+// Quick pill — trans (multi-select toggle)
 function setSbTransQ(v, btn) {
-  if (S.trans === v) {
-    S.trans = '';
-    btn.classList.remove('active');
-  } else {
-    S.trans = v;
-    document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-  }
+  toggleArr(S.trans, v);
+  btn.classList.toggle('active', S.trans.includes(v));
   syncAccTrans();
   applyFilters();
 }
 
-// Accordion pill — fuel
+// Accordion pill — fuel (multi-select)
 function setSbFuelAcc(v, btn) {
-  S.fuel = v;
-  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  toggleArr(S.fuel, v);
+  btn.classList.toggle('active', S.fuel.includes(v));
   // sync quick pills
-  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===v));
-  updateAccBadge('accFuel','accFuelBadge', v);
+  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>
+    b.classList.toggle('active', S.fuel.includes(b.dataset.fuel)));
+  updateAccBadge('accFuel','accFuelBadge', S.fuel);
   applyFilters();
 }
 
-// Accordion pill — trans
+// Accordion pill — trans (multi-select)
 function setSbTransAcc(v, btn) {
-  S.trans = v;
-  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
-  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.toggle('active', b.dataset.trans===v));
-  updateAccBadge('accTrans','accTransBadge', v);
+  toggleArr(S.trans, v);
+  btn.classList.toggle('active', S.trans.includes(v));
+  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>
+    b.classList.toggle('active', S.trans.includes(b.dataset.trans)));
+  updateAccBadge('accTrans','accTransBadge', S.trans);
   applyFilters();
 }
 
 function setSbSort(v, btn) {
   S.sort = v;
   document.querySelectorAll('#accSort .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
-  const labels = {default:'Latest','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
+  const labels = {default:'','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
   updateAccBadge('accSort','accSortBadge', v !== 'default' ? labels[v] : '');
   applyFilters();
 }
 
 function setSbBodyAcc(v, btn) {
-  S.bodyType = v;
-  document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
-  updateAccBadge('accBody','accBodyBadge', v);
+  toggleArr(S.bodyType, v);
+  btn.classList.toggle('active', S.bodyType.includes(v));
+  updateAccBadge('accBody','accBodyBadge', S.bodyType);
   applyFilters();
 }
+
 function setSbColourAcc(v, btn) {
-  S.colour = v;
-  document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
-  updateAccBadge('accColour','accColourBadge', v);
+  toggleArr(S.colour, v);
+  btn.classList.toggle('active', S.colour.includes(v));
+  updateAccBadge('accColour','accColourBadge', S.colour);
   applyFilters();
+}
+
+// Popup handlers — multi-select
+function setPopFuel(v, btn) {
+  toggleArr(P.fuel, v);
+  btn.classList.toggle('active', P.fuel.includes(v));
+}
+function setPopTrans(v, btn) {
+  toggleArr(P.trans, v);
+  btn.classList.toggle('active', P.trans.includes(v));
 }
 function setPopBody(v, btn) {
-  P.bodyType = v;
-  document.querySelectorAll('#popBodyPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  toggleArr(P.bodyType, v);
+  btn.classList.toggle('active', P.bodyType.includes(v));
 }
 function setPopColour(v, btn) {
-  P.colour = v;
-  document.querySelectorAll('#popColourPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
+  toggleArr(P.colour, v);
+  btn.classList.toggle('active', P.colour.includes(v));
 }
+
 function syncAccFuel() {
-  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===S.fuel));
+  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>
+    b.classList.toggle('active', S.fuel.includes(b.dataset.fuel)));
   updateAccBadge('accFuel','accFuelBadge', S.fuel);
 }
 function syncAccTrans() {
-  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.trans===S.trans));
+  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>
+    b.classList.toggle('active', S.trans.includes(b.dataset.trans)));
   updateAccBadge('accTrans','accTransBadge', S.trans);
-}
-
-function updateAccBadge(rowId, badgeId, val) {
-  const row    = document.getElementById(rowId);
-  const badge  = document.getElementById(badgeId);
-  const header = row ? row.querySelector('.acc-header') : null;
-  if (!badge || !header) return;
-  if (val) {
-    badge.textContent = val;
-    header.classList.add('has-val');
-  } else {
-    badge.textContent = '';
-    header.classList.remove('has-val');
-  }
 }
 
 // Sidebar price slider
@@ -1033,10 +1177,22 @@ function updateSbSlider() {
 //  MOBILE QUICK CHIP
 // ══════════════════════════════════════
 function quickChip(val, btn) {
-  S.fuel=''; S.trans='';
-  if (val.startsWith('fuel:'))  S.fuel  = val.slice(5);
-  if (val.startsWith('trans:')) S.trans = val.slice(6);
-  document.querySelectorAll('.mob-chip').forEach(b=>b.classList.toggle('active',b===btn));
+  // Quick chips on mobile are simple single-toggle convenience shortcuts
+  const isAll = val === '';
+  if (isAll) {
+    S.fuel=[]; S.trans=[];
+    document.querySelectorAll('.mob-chip').forEach(b=>b.classList.toggle('active', b.dataset.val===''));
+  } else {
+    // Toggle this chip's value
+    let field='', v='';
+    if (val.startsWith('fuel:'))  { field='fuel';  v=val.slice(5); }
+    if (val.startsWith('trans:')) { field='trans'; v=val.slice(6); }
+    toggleArr(S[field], v);
+    btn.classList.toggle('active', S[field].includes(v));
+    // Deactivate "All" chip if any filter active
+    const allBtn = document.querySelector('.mob-chip[data-val=""]');
+    if(allBtn) allBtn.classList.toggle('active', !S.fuel.length&&!S.trans.length);
+  }
   applyFilters();
 }
 
@@ -1060,10 +1216,14 @@ function overlayClose(e) {
 
 function syncPopupUI() {
   document.querySelectorAll('#popSortPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.sort===P.sort));
-  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.fuel===P.fuel));
-  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.trans===P.trans));
-  document.querySelectorAll('#popBodyPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.body===(P.bodyType||'')));
-  document.querySelectorAll('#popColourPills .popup-pill').forEach(b=>b.classList.toggle('active', b.dataset.colour===(P.colour||'')));
+  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>b.classList.toggle('active', (P.fuel||[]).includes(b.dataset.fuel)));
+  document.querySelectorAll('#popTransPills .popup-pill').forEach(b=>b.classList.toggle('active', (P.trans||[]).includes(b.dataset.trans)));
+  document.querySelectorAll('#popBodyPills .popup-pill').forEach(b=>b.classList.toggle('active', (P.bodyType||[]).includes(b.dataset.body)));
+  document.querySelectorAll('#popColourPills .popup-pill').forEach(b=>b.classList.toggle('active', (P.colour||[]).includes(b.dataset.colour)));
+  updatePopAccBadge('paccFuel','paccFuelBadge', P.fuel||[]);
+  updatePopAccBadge('paccTrans','paccTransBadge', P.trans||[]);
+  updatePopAccBadge('paccBody','paccBodyBadge', P.bodyType||[]);
+  updatePopAccBadge('paccColour','paccColourBadge', P.colour||[]);
   document.getElementById('popRangeMin').value = P.priceMin;
   document.getElementById('popRangeMax').value = P.priceMax;
   updatePopSlider();
@@ -1103,16 +1263,22 @@ function updatePopSlider() {
 }
 
 function applyPopup() {
-  S = { ...S, ...P };
+  // Deep copy arrays from P into S
+  S.fuel     = [...(P.fuel||[])];
+  S.trans    = [...(P.trans||[])];
+  S.bodyType = [...(P.bodyType||[])];
+  S.colour   = [...(P.colour||[])];
+  S.sort     = P.sort;
+  S.priceMin = P.priceMin;
+  S.priceMax = P.priceMax;
   updateSbSlider();
-  // Sync accordion + quick pills
   syncAccFuel(); syncAccTrans();
   if(document.getElementById('accBodyBody'))
-    document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.body===(S.bodyType||'')));
-  updateAccBadge('accBody','accBodyBadge', S.bodyType||'');
+    document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active', S.bodyType.includes(b.dataset.body)));
+  updateAccBadge('accBody','accBodyBadge', S.bodyType);
   if(document.getElementById('accColourBody'))
-    document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active', b.dataset.colour===(S.colour||'')));
-  updateAccBadge('accColour','accColourBadge', S.colour||'');
+    document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active', S.colour.includes(b.dataset.colour)));
+  updateAccBadge('accColour','accColourBadge', S.colour);
   document.querySelectorAll('#accSort .acc-pill').forEach(b=>{
     const sorts={0:'default',1:'price-asc',2:'price-desc',3:'km-asc'};
     const i=[...b.parentNode.children].indexOf(b);
@@ -1122,15 +1288,14 @@ function applyPopup() {
   updateAccBadge('accSort','accSortBadge', sortLabels[S.sort]||'');
   const priceActive = S.priceMin>0||S.priceMax<MAX_PRICE;
   updateAccBadge('accPrice','accPriceBadge', priceActive ? fmtPrice(S.priceMin)+'–'+fmtPrice(S.priceMax) : '');
-  // Update filter button indicator
-  const hasFilter = S.fuel||S.trans||S.bodyType||S.colour||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
+  const hasFilter = S.fuel.length||S.trans.length||S.bodyType.length||S.colour.length||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
   document.getElementById('mobFilterBtn').classList.toggle('has-filter', !!hasFilter);
   closePopup();
   applyFilters();
 }
 
 function resetPopup() {
-  P = { search:S.search, fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  P = { search:S.search, fuel:[], trans:[], bodyType:[], colour:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
   document.getElementById('popRangeMin').value = 0;
   document.getElementById('popRangeMax').value = MAX_PRICE;
   syncPopupUI();
@@ -1148,18 +1313,22 @@ function onSearch() {
 //  CLEAR ALL
 // ══════════════════════════════════════
 function clearAll() {
-  S = { search:'', fuel:'', trans:'', bodyType:'', colour:'', priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  S = { search:'', fuel:[], trans:[], bodyType:[], colour:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
   document.getElementById('searchInput').value='';
   // Accordion pills
-  document.querySelectorAll('#accFuelBody .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
-  document.querySelectorAll('#accTransBody .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('#accSort .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
   // Quick pills
   document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
   // Badges
-  updateAccBadge('accFuel','accFuelBadge','');
-  updateAccBadge('accTrans','accTransBadge','');
+  updateAccBadge('accFuel','accFuelBadge',[]);
+  updateAccBadge('accTrans','accTransBadge',[]);
+  updateAccBadge('accBody','accBodyBadge',[]);
+  updateAccBadge('accColour','accColourBadge',[]);
   updateAccBadge('accSort','accSortBadge','');
   updateAccBadge('accPrice','accPriceBadge','');
   // Mobile
@@ -1176,10 +1345,10 @@ function applyFilters() {
   let cars = allCars.filter(c=>{
     const txt=`${c.model} ${c.variant} ${c.make}`.toLowerCase();
     if(S.search && !txt.includes(S.search)) return false;
-    if(S.fuel     && c.fuel!==S.fuel)         return false;
-    if(S.trans    && c.trans!==S.trans)       return false;
-    if(S.bodyType && c.bodyType!==S.bodyType) return false;
-    if(S.colour   && c.colour!==S.colour)     return false;
+    if(S.fuel.length     && !S.fuel.includes(c.fuel))         return false;
+    if(S.trans.length    && !S.trans.includes(c.trans))       return false;
+    if(S.bodyType.length && !S.bodyType.includes(c.bodyType)) return false;
+    if(S.colour.length   && !S.colour.includes(c.colour))     return false;
     if(S.priceMin>0 && c.price<S.priceMin)  return false;
     if(S.priceMax<MAX_PRICE && c.price>S.priceMax) return false;
     return true;
@@ -1349,5 +1518,59 @@ function notifyHeight(){
 window.addEventListener('load',notifyHeight);
 window.addEventListener('resize',notifyHeight);
 </script>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="https://drive.google.com/thumbnail?id=1LWFjToS8Cl8_wJvGUFOnc_KaFXO0KEYH&sz=s400" alt="Caar Seva" class="footer-logo-img">
+        <div class="logo-sub">Certified Pre-Owned Cars</div>
+        <p>Bengaluru's most trusted destination for certified pre-owned vehicles. Quality cars, honest prices, and a buying experience that's truly hassle-free.</p>
+        <div class="socials">
+          <a href="#" class="social-btn" title="Instagram">📸</a>
+          <a href="#" class="social-btn" title="Facebook">📘</a>
+          <a href="#" class="social-btn" title="YouTube">▶️</a>
+          <a href="#" class="social-btn" title="Twitter/X">🐦</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Quick Links</div>
+        <ul class="footer-links">
+          <li><a href="https://sites.google.com/view/caarseva">🏠 Home</a></li>
+          <li><a href="https://sites.google.com/view/caarseva/buy-cars">🚗 Buy Cars</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <ul class="footer-links">
+          <li><a href="https://www.google.com/maps/place/1009,+80;feet+road,+Sector+A,+Ambedkar+Colony,+Yelahanka+New+Town,+Bengaluru,+Karnataka+560064/@13.0930791,77.5872272,808m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3bae185c9748559b:0x733d6fab63c2b089!8m2!3d13.0930739!4d77.5898021!16s%2Fg%2F11w1x5vfj6" target="_blank">📍 Yelahanka New Town, Bengaluru</a></li>
+          <li><a href="tel:+919999999999">📞 +91 99999 99999</a></li>
+          <li><a href="mailto:caarseva@gmail.com">✉️ caarseva@gmail.com</a></li>
+          <li><a href="https://www.google.com/maps/place/1009,+80;feet+road,+Sector+A,+Ambedkar+Colony,+Yelahanka+New+Town,+Bengaluru,+Karnataka+560064/@13.0930791,77.5872272,808m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3bae185c9748559b:0x733d6fab63c2b089!8m2!3d13.0930739!4d77.5898021!16s%2Fg%2F11w1x5vfj6" target="_blank">🗺️ Get Directions</a></li>
+        </ul>
+        <div style="margin-top:18px;">
+          <div class="footer-col-title">Hours</div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,.4);line-height:1.8;">
+            Mon – Sat: 9:00 AM – 7:00 PM<br>Sunday: 10:00 AM – 5:00 PM
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 Caar Seva. All rights reserved. · Yelahanka, Bengaluru</div>
+      <a href="https://wa.me/919999999999?text=Hi, I'm interested in buying a car from Caar Seva." target="_blank" class="footer-wa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- Floating WA -->
+<a href="https://wa.me/919999999999?text=Hi, I want to enquire about a car at Caar Seva." target="_blank" class="wa-float" title="Chat on WhatsApp">
+  <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
 </body>
 </html>
