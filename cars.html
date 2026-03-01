@@ -827,21 +827,39 @@ footer::before {
 <script>
 // ── CONFIG ──────────────────────────────────────────
 const CSV_URL      = "https://script.google.com/macros/s/AKfycbyAEg_itzZ_z1hkOhLv0zk9iQS3m6nvrKmkUNqMQ9TJ8FdtttvfEXEro2Z-cc67XHhf/exec";
-const WA_NUMBER    = "919999999999";   // ← your WhatsApp number
-const DEALER_PHONE = "9999999999";     // ← your call number
-const MAX_PRICE    = 5000000;          // slider max (50 lakh)
+const WA_NUMBER    = "919999999999";
+const DEALER_PHONE = "9999999999";
+const MAX_PRICE    = 5000000;
 // ────────────────────────────────────────────────────
 
 let allCars  = [];
 let dpImages = [], dpIdx = 0;
 
-// Shared filter state
-let S = { search:'', fuel:[], trans:[], bodyType:[], colour:[], category:[], features:[], safety:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+// Filter state
+let S = {
+  search:'', fuel:[], trans:[], bodyType:[], colour:[],
+  category:[], features:[], safety:[],
+  priceMin:0, priceMax:MAX_PRICE, sort:'default'
+};
 
-// Popup temp state (only committed on "Apply")
-let P = {};
+// ── UTILITIES ──
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cl(v) { return (v||'').trim().replace(/^"|"$/g,''); }
+function fmtPrice(n){ return '₹'+(n/100000).toFixed(n%100000===0?0:1)+'L'; }
+function toggleArr(arr,val){ const i=arr.indexOf(val); i===-1?arr.push(val):arr.splice(i,1); }
 
-// ── DRIVE URL FIXER ──
+function csvSplit(row) {
+  const out=[]; let inQ=false,cur='';
+  for(let i=0;i<row.length;i++){
+    const ch=row[i];
+    if(ch==='"'){ inQ=!inQ; }
+    else if(ch===','&&!inQ){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out;
+}
+
 function fixDriveUrl(url) {
   if (!url) return '';
   url = url.trim().replace(/^"|"$/g,'');
@@ -852,19 +870,23 @@ function fixDriveUrl(url) {
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=s800` : url;
 }
 
-// ── FETCH ──
+function notifyHeight() {
+  try { window.parent.postMessage({type:'resize',height:document.body.scrollHeight},'*'); } catch(e){}
+}
+
+// ── FETCH CSV ──
 fetch(CSV_URL)
-  .then(r => { if(!r.ok) throw new Error(r.status); return r.text(); })
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
   .then(text => {
-    if(!text || text.trim().length < 20 || text.trim().startsWith('<'))
-      throw new Error('bad response');
+    if(!text||text.trim().length<20||text.trim().startsWith('<')) throw new Error('bad response');
     parseCSV(text);
   })
   .catch(err => {
     document.getElementById('grid').innerHTML =
-      `<div class="state"><p style="text-align:center">⚠️ Could not load inventory.<br><small style="color:#999">${err.message}</small></p></div>`;
+      `<div class="state"><p>⚠️ Could not load inventory.<br><small style="color:#999">${err.message}</small></p></div>`;
   });
 
+// ── PARSE CSV ──
 function parseCSV(raw) {
   const lines = raw.trim().split('\n').slice(1);
   allCars = lines.map((ln,i)=>{
@@ -872,12 +894,12 @@ function parseCSV(raw) {
     const photos = cols.slice(17,37).map(p=>fixDriveUrl(p)).filter(Boolean);
     return {
       id:       i,
-      model:    cl(cols[1]), variant: cl(cols[2]), make: cl(cols[3]),
-      category: cl(cols[4]), bodyType: cl(cols[5]),
-      fuel:     cl(cols[6]), trans:    cl(cols[7]),
-      colour:   cl(cols[8]), seats:    cl(cols[9]),
-      owners:   cl(cols[10]),features: cl(cols[11]),
-      airbags:  cl(cols[12]),safety:   cl(cols[13]),
+      model:    cl(cols[1]),  variant:  cl(cols[2]),  make:     cl(cols[3]),
+      category: cl(cols[4]),  bodyType: cl(cols[5]),
+      fuel:     cl(cols[6]),  trans:    cl(cols[7]),
+      colour:   cl(cols[8]),  seats:    cl(cols[9]),
+      owners:   cl(cols[10]), features: cl(cols[11]),
+      airbags:  cl(cols[12]), safety:   cl(cols[13]),
       odometer: parseInt((cl(cols[14])||'0').replace(/\D/g,''))||0,
       price:    parseInt((cl(cols[15])||'0').replace(/\D/g,''))||0,
       status:   cl(cols[16]), photos
@@ -889,367 +911,427 @@ function parseCSV(raw) {
   buildMfpOptions();
   applyFilters();
 }
-function cl(v)  { return (v||'').trim().replace(/^"|"$/g,''); }
-function csvSplit(row) {
-  const out=[]; let inQ=false,cur='';
-  for(let i=0;i<row.length;i++){
-    const ch=row[i];
-    if(ch==='"'){inQ=!inQ;}
-    else if(ch===','&&!inQ){out.push(cur);cur='';}
-    else{cur+=ch;}
+
+// ══════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════
+function buildSidebar() {
+  const fuels   = uniq(allCars.map(c=>c.fuel));
+  const trans   = uniq(allCars.map(c=>c.trans));
+  const bodies  = uniq(allCars.map(c=>c.bodyType));
+  const colours = uniq(allCars.map(c=>c.colour));
+  const cats    = uniq(allCars.map(c=>c.category));
+  const feats   = uniqSplit(allCars,'features');
+  const safes   = uniqSplit(allCars,'safety');
+
+  function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort(); }
+  function uniqSplit(arr,field){
+    const s=new Set();
+    arr.forEach(c=>{ if(c[field]) c[field].split(/[,;|]/).map(v=>v.trim()).filter(Boolean).forEach(v=>s.add(v)); });
+    return [...s].sort();
   }
-  out.push(cur); return out;
+
+  // Quick pills
+  fillQPills('sbQuickFuel',  fuels,  'fuel',  setSbFuelQ);
+  fillQPills('sbQuickTrans', trans,  'trans', setSbTransQ);
+
+  // Accordion bodies
+  fillAccPills('accFuelBody',     fuels,   'fuel',  'fuel',     setSbFuelAcc);
+  fillAccPills('accTransBody',    trans,   'trans', 'trans',    setSbTransAcc);
+  fillAccPills('accCategoryBody', cats,    'cat',   'category', setSbCatAcc);
+
+  // Extra accordion rows
+  const extra = document.getElementById('accExtra');
+  extra.innerHTML = '';
+  buildAccRow(extra, 'accBody',     'accBodyBadge',     'Body Type',       bodies,  'body',   'bodyType',  setSbBodyAcc);
+  buildAccRow(extra, 'accColour',   'accColourBadge',   'Colour',          colours, 'colour', 'colour',    setSbColourAcc);
+  buildAccRow(extra, 'accFeatures', 'accFeaturesBadge', 'Features',        feats,   'feat',   'features',  setSbFeatAcc);
+  buildAccRow(extra, 'accSafety',   'accSafetyBadge',   'Safety Features', safes,   'safe',   'safety',    setSbSafeAcc);
+
+  updateSbSlider();
 }
 
-// ── FORMAT PRICE LABEL ──
-function fmtPrice(v) {
-  if (v >= 100000)  return '₹' + (v/100000).toFixed(v%100000===0?0:1) + 'L';
-  if (v >= 1000)    return '₹' + (v/1000).toFixed(0) + 'K';
-  return '₹' + v;
+function uniq(arr){ return [...new Set(arr.filter(Boolean))].sort(); }
+function uniqSplit(cars,field){
+  const s=new Set();
+  cars.forEach(c=>{ if(c[field]) c[field].split(/[,;|]/).map(v=>v.trim()).filter(Boolean).forEach(v=>s.add(v)); });
+  return [...s].sort();
+}
+
+function fillQPills(containerId, items, dataAttr, handler) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  items.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'sb-qpill';
+    b.dataset[dataAttr] = v;
+    b.textContent = v;
+    b.onclick = () => handler(v, b);
+    el.appendChild(b);
+  });
+}
+
+function fillAccPills(containerId, items, dataAttr, clearField, handler) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  const any = document.createElement('button');
+  any.className = 'acc-pill acc-pill-any';
+  any.textContent = 'Any';
+  any.onclick = () => clearSbFilter(clearField);
+  el.appendChild(any);
+  items.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'acc-pill';
+    b.dataset[dataAttr] = v;
+    b.textContent = v;
+    b.onclick = () => handler(v, b);
+    el.appendChild(b);
+  });
+}
+
+function buildAccRow(parent, rowId, badgeId, label, items, dataAttr, clearField, handler) {
+  const row = document.createElement('div');
+  row.className = 'acc-row';
+  row.id = rowId;
+  const bodyId = rowId + 'Body';
+  row.innerHTML = `<div class="acc-header" onclick="toggleAcc('${rowId}')">
+    <span class="acc-name">${label}</span>
+    <span class="acc-badge" id="${badgeId}"></span>
+    <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+  </div>`;
+  const body = document.createElement('div');
+  body.className = 'acc-body';
+  body.id = bodyId;
+  row.appendChild(body);
+  parent.appendChild(row);
+  fillAccPills(bodyId, items, dataAttr, clearField, handler);
 }
 
 // ── ACCORDION TOGGLE ──
 function toggleAcc(id) {
-  const row = document.getElementById(id);
-  row.classList.toggle('open');
+  document.getElementById(id).classList.toggle('open');
 }
 
-// ── BUILD SIDEBAR ──
-function buildSidebar() {
-  const fuels   = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
-  const trans   = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
-  const bodies  = [...new Set(allCars.map(c=>c.bodyType).filter(Boolean))].sort();
-  const colours = [...new Set(allCars.map(c=>c.colour).filter(Boolean))].sort();
-
-  // Quick pills (top section) — fuel + trans
-  const qf = document.getElementById('sbQuickFuel');
-  const qt = document.getElementById('sbQuickTrans');
-  qf.innerHTML = fuels.map(f=>
-    `<button class="sb-qpill" data-fuel="${f}" onclick="setSbFuelQ('${f}',this)">${f}</button>`
-  ).join('');
-  qt.innerHTML = trans.map(t=>
-    `<button class="sb-qpill" data-trans="${t}" onclick="setSbTransQ('${t}',this)">${t}</button>`
-  ).join('');
-
-  // Accordion: Fuel body — "Any" clears selection, then each option
-  document.getElementById('accFuelBody').innerHTML =
-    `<button class="acc-pill acc-pill-any" data-fuel="" onclick="clearSbFilter('fuel')">Any</button>` +
-    fuels.map(f=>
-      `<button class="acc-pill" data-fuel="${f}" onclick="setSbFuelAcc('${f}',this)">${f}</button>`
-    ).join('');
-
-  // Accordion: Trans body
-  document.getElementById('accTransBody').innerHTML =
-    `<button class="acc-pill acc-pill-any" data-trans="" onclick="clearSbFilter('trans')">Any</button>` +
-    trans.map(t=>
-      `<button class="acc-pill" data-trans="${t}" onclick="setSbTransAcc('${t}',this)">${t}</button>`
-    ).join('');
-
-  // Inject Body Type + Colour accordion rows into #accExtra
-  const extra = document.getElementById('accExtra');
-  extra.innerHTML = `
-    <div class="acc-row" id="accBody">
-      <div class="acc-header" onclick="toggleAcc('accBody')">
-        <span class="acc-name">Body Type</span>
-        <span class="acc-badge" id="accBodyBadge"></span>
-        <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div class="acc-body" id="accBodyBody">
-        <button class="acc-pill acc-pill-any" onclick="clearSbFilter('bodyType')">Any</button>
-        ${bodies.map(b=>`<button class="acc-pill" data-body="${b}" onclick="setSbBodyAcc('${b}',this)">${b}</button>`).join('')}
-      </div>
-    </div>
-    <div class="acc-row" id="accColour">
-      <div class="acc-header" onclick="toggleAcc('accColour')">
-        <span class="acc-name">Colour</span>
-        <span class="acc-badge" id="accColourBadge"></span>
-        <svg class="acc-chevron" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div class="acc-body" id="accColourBody">
-        <button class="acc-pill acc-pill-any" onclick="clearSbFilter('colour')">Any</button>
-        ${colours.map(c=>`<button class="acc-pill" data-colour="${c}" onclick="setSbColourAcc('${c}',this)">${c}</button>`).join('')}
-      </div>
-    </div>`;
-
-  updateSbSlider();
-}
-
-// ── BUILD MOBILE QUICK CHIPS ──
-function buildMobChips() {
-  const fuels = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
-  const trans = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
-  const cont  = document.getElementById('mobChips');
-  cont.innerHTML = `<button class="mob-chip active" data-val="" onclick="quickChip('',this)">All</button>`;
-  fuels.forEach(f=>{
-    const b=document.createElement('button');
-    b.className='mob-chip';b.dataset.val=`fuel:${f}`;b.textContent=f;
-    b.onclick=()=>quickChip(`fuel:${f}`,b);cont.appendChild(b);
-  });
-  trans.forEach(t=>{
-    const b=document.createElement('button');
-    b.className='mob-chip';b.dataset.val=`trans:${t}`;b.textContent=t;
-    b.onclick=()=>quickChip(`trans:${t}`,b);cont.appendChild(b);
-  });
-}
-
-
-
-// ══════════════════════════════════════
-//  MULTI-SELECT HELPERS
-// ══════════════════════════════════════
-
-// Toggle a value in/out of an array
-function toggleArr(arr, val) {
-  const i = arr.indexOf(val);
-  if (i === -1) arr.push(val);
-  else arr.splice(i, 1);
-  return arr;
-}
-
-// Badge text: show count if >1, else show value, else ''
-function badgeText(arr) {
-  if (!arr || !arr.length) return '';
-  if (arr.length === 1) return arr[0];
-  return arr.length + ' selected';
-}
-
-function updateAccBadge(rowId, badgeId, arr) {
-  const row    = document.getElementById(rowId);
-  const badge  = document.getElementById(badgeId);
-  const header = row ? row.querySelector('.acc-header') : null;
-  if (!badge || !header) return;
-  const txt = Array.isArray(arr) ? badgeText(arr) : arr; // allow plain string for sort/price
-  if (txt) {
-    badge.textContent = txt;
-    header.classList.add('has-val');
-  } else {
-    badge.textContent = '';
-    header.classList.remove('has-val');
-  }
-}
-
-// ══════════════════════════════════════
-//  SIDEBAR HANDLERS
-// ══════════════════════════════════════
-
-// Quick pill — fuel (multi-select toggle)
-function setSbFuelQ(v, btn) {
-  toggleArr(S.fuel, v);
+// ── SIDEBAR HANDLERS ──
+function setSbFuelQ(v,btn) {
+  toggleArr(S.fuel,v);
   btn.classList.toggle('active', S.fuel.includes(v));
-  syncAccFuel();
+  syncPillsActive('accFuelBody','fuel',S.fuel);
+  setBadge('accFuel','accFuelBadge',S.fuel);
   applyFilters();
 }
-
-// Quick pill — trans (multi-select toggle)
-function setSbTransQ(v, btn) {
-  toggleArr(S.trans, v);
+function setSbTransQ(v,btn) {
+  toggleArr(S.trans,v);
   btn.classList.toggle('active', S.trans.includes(v));
-  syncAccTrans();
+  syncPillsActive('accTransBody','trans',S.trans);
+  setBadge('accTrans','accTransBadge',S.trans);
   applyFilters();
 }
-
-// Accordion pill — fuel (multi-select)
-function setSbFuelAcc(v, btn) {
-  toggleArr(S.fuel, v);
-  btn.classList.toggle('active', S.fuel.includes(v));
-  // sync quick pills
-  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>
-    b.classList.toggle('active', S.fuel.includes(b.dataset.fuel)));
-  updateAccBadge('accFuel','accFuelBadge', S.fuel);
+function setSbFuelAcc(v,btn) {
+  toggleArr(S.fuel,v);
+  syncPillsActive('accFuelBody','fuel',S.fuel);
+  syncQActive('sbQuickFuel','fuel',S.fuel);
+  setBadge('accFuel','accFuelBadge',S.fuel);
   applyFilters();
 }
-
-// Accordion pill — trans (multi-select)
-function setSbTransAcc(v, btn) {
-  toggleArr(S.trans, v);
-  btn.classList.toggle('active', S.trans.includes(v));
-  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>
-    b.classList.toggle('active', S.trans.includes(b.dataset.trans)));
-  updateAccBadge('accTrans','accTransBadge', S.trans);
+function setSbTransAcc(v,btn) {
+  toggleArr(S.trans,v);
+  syncPillsActive('accTransBody','trans',S.trans);
+  syncQActive('sbQuickTrans','trans',S.trans);
+  setBadge('accTrans','accTransBadge',S.trans);
   applyFilters();
 }
-
-function setSbSort(v, btn) {
+function setSbCatAcc(v,btn) {
+  toggleArr(S.category,v);
+  syncPillsActive('accCategoryBody','cat',S.category);
+  setBadge('accCategory','accCategoryBadge',S.category);
+  applyFilters();
+}
+function setSbBodyAcc(v,btn) {
+  toggleArr(S.bodyType,v);
+  syncPillsActive('accBodyBody','body',S.bodyType);
+  setBadge('accBody','accBodyBadge',S.bodyType);
+  applyFilters();
+}
+function setSbColourAcc(v,btn) {
+  toggleArr(S.colour,v);
+  syncPillsActive('accColourBody','colour',S.colour);
+  setBadge('accColour','accColourBadge',S.colour);
+  applyFilters();
+}
+function setSbFeatAcc(v,btn) {
+  toggleArr(S.features,v);
+  syncPillsActive('accFeaturesBody','feat',S.features);
+  setBadge('accFeatures','accFeaturesBadge',S.features);
+  applyFilters();
+}
+function setSbSafeAcc(v,btn) {
+  toggleArr(S.safety,v);
+  syncPillsActive('accSafetyBody','safe',S.safety);
+  setBadge('accSafety','accSafetyBadge',S.safety);
+  applyFilters();
+}
+function setSbSort(v,btn) {
   S.sort = v;
   document.querySelectorAll('#accSort .acc-pill').forEach(b=>b.classList.toggle('active',b===btn));
-  const labels = {default:'','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
-  updateAccBadge('accSort','accSortBadge', v !== 'default' ? labels[v] : '');
+  const labels={default:'','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
+  setBadge('accSort','accSortBadge', v!=='default'?labels[v]:'');
   applyFilters();
 }
 
-function setSbBodyAcc(v, btn) {
-  toggleArr(S.bodyType, v);
-  btn.classList.toggle('active', S.bodyType.includes(v));
-  updateAccBadge('accBody','accBodyBadge', S.bodyType);
-  applyFilters();
+function syncPillsActive(bodyId, dataAttr, activeArr) {
+  const el = document.getElementById(bodyId);
+  if (!el) return;
+  el.querySelectorAll('.acc-pill').forEach(b => {
+    b.classList.toggle('active', activeArr.includes(b.dataset[dataAttr]));
+  });
+}
+function syncQActive(containerId, dataAttr, activeArr) {
+  document.querySelectorAll('#'+containerId+' .sb-qpill').forEach(b =>
+    b.classList.toggle('active', activeArr.includes(b.dataset[dataAttr])));
+}
+function setBadge(rowId, badgeId, val) {
+  const row   = document.getElementById(rowId);
+  const badge = document.getElementById(badgeId);
+  if (!badge) return;
+  const txt = Array.isArray(val)
+    ? (val.length===0?'':(val.length===1?val[0]:val.length+' selected'))
+    : (val||'');
+  badge.textContent = txt;
+  if (row) row.querySelector('.acc-header')?.classList.toggle('has-val',!!txt);
 }
 
-function setSbColourAcc(v, btn) {
-  toggleArr(S.colour, v);
-  btn.classList.toggle('active', S.colour.includes(v));
-  updateAccBadge('accColour','accColourBadge', S.colour);
-  applyFilters();
-}
-
-// Popup handlers — multi-select
-
-// Clear a single sidebar filter
 function clearSbFilter(field) {
   S[field] = [];
-  const bodyIds  = {fuel:'accFuelBody', trans:'accTransBody', bodyType:'accBodyBody', colour:'accColourBody', category:'accCategoryBody', features:'accFeaturesBody', safety:'accSafetyBody'};
-  const badgeIds = {fuel:['accFuel','accFuelBadge'], trans:['accTrans','accTransBadge'], bodyType:['accBody','accBodyBadge'], colour:['accColour','accColourBadge'], category:['accCategory','accCategoryBadge'], features:['accFeatures','accFeaturesBadge'], safety:['accSafety','accSafetyBadge']};
-  const qIds = {fuel:'#sbQuickFuel .sb-qpill', trans:'#sbQuickTrans .sb-qpill'};
-  const bodyEl = document.getElementById(bodyIds[field]);
-  if (bodyEl) bodyEl.querySelectorAll('.acc-pill').forEach(b=>b.classList.remove('active'));
-  if (qIds[field]) document.querySelectorAll(qIds[field]).forEach(b=>b.classList.remove('active'));
-  const [rowId, badgeId] = badgeIds[field] || [];
-  if (rowId) updateAccBadge(rowId, badgeId, []);
+  const map = {
+    fuel:     {body:'accFuelBody',     da:'fuel',   row:'accFuel',     badge:'accFuelBadge',     q:'sbQuickFuel',  qda:'fuel'},
+    trans:    {body:'accTransBody',    da:'trans',  row:'accTrans',    badge:'accTransBadge',    q:'sbQuickTrans', qda:'trans'},
+    category: {body:'accCategoryBody', da:'cat',    row:'accCategory', badge:'accCategoryBadge'},
+    bodyType: {body:'accBodyBody',     da:'body',   row:'accBody',     badge:'accBodyBadge'},
+    colour:   {body:'accColourBody',   da:'colour', row:'accColour',   badge:'accColourBadge'},
+    features: {body:'accFeaturesBody', da:'feat',   row:'accFeatures', badge:'accFeaturesBadge'},
+    safety:   {body:'accSafetyBody',   da:'safe',   row:'accSafety',   badge:'accSafetyBadge'},
+  };
+  const m = map[field]; if(!m) return;
+  syncPillsActive(m.body, m.da, []);
+  if(m.q) syncQActive(m.q, m.qda, []);
+  setBadge(m.row, m.badge, []);
   applyFilters();
 }
 
-// ── Category handler ──
-function setSbCatAcc(v, btn) {
-  toggleArr(S.category, v);
-  document.querySelectorAll('#accCategoryBody .acc-pill').forEach(b=>b.classList.toggle('active', S.category.includes(b.dataset.cat)));
-  updateAccBadge('accCategory','accCategoryBadge', S.category);
-  applyFilters();
-}
-
-// ── Features handler ──
-function setSbFeatAcc(v, btn) {
-  toggleArr(S.features, v);
-  document.querySelectorAll('#accFeaturesBody .acc-pill').forEach(b=>b.classList.toggle('active', S.features.includes(b.dataset.feat)));
-  updateAccBadge('accFeatures','accFeaturesBadge', S.features);
-  applyFilters();
-}
-
-// ── Safety handler ──
-function setSbSafeAcc(v, btn) {
-  toggleArr(S.safety, v);
-  document.querySelectorAll('#accSafetyBody .acc-pill').forEach(b=>b.classList.toggle('active', S.safety.includes(b.dataset.safe)));
-  updateAccBadge('accSafety','accSafetyBadge', S.safety);
-  applyFilters();
-}
-
-function syncAccFuel() {
-  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>
-    b.classList.toggle('active', S.fuel.includes(b.dataset.fuel)));
-  updateAccBadge('accFuel','accFuelBadge', S.fuel);
-}
-function syncAccTrans() {
-  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>
-    b.classList.toggle('active', S.trans.includes(b.dataset.trans)));
-  updateAccBadge('accTrans','accTransBadge', S.trans);
-}
-
-// Sidebar price slider
+// ── PRICE SLIDER ──
 function onSbRange() {
   let mn = parseInt(document.getElementById('sbRangeMin').value);
   let mx = parseInt(document.getElementById('sbRangeMax').value);
-  if (mn > mx) { const t=mn; mn=mx; mx=t; }
-  S.priceMin = mn; S.priceMax = mx;
+  if(mn>mx){const t=mn;mn=mx;mx=t;}
+  S.priceMin=mn; S.priceMax=mx;
   updateSbSlider();
-  const priceActive = mn>0||mx<MAX_PRICE;
-  updateAccBadge('accPrice','accPriceBadge', priceActive ? fmtPrice(mn)+'–'+(mx>=MAX_PRICE?'50L+':fmtPrice(mx)) : '');
+  const active = mn>0||mx<MAX_PRICE;
+  setBadge('accPrice','accPriceBadge', active?fmtPrice(mn)+'–'+(mx>=MAX_PRICE?'50L+':fmtPrice(mx)):'');
   applyFilters();
 }
 function updateSbSlider() {
-  const mn  = S.priceMin, mx = S.priceMax;
-  const pct1 = mn / MAX_PRICE * 100;
-  const pct2 = mx / MAX_PRICE * 100;
-  document.getElementById('sbRangeMin').value = mn;
-  document.getElementById('sbRangeMax').value = mx;
-  document.getElementById('sbSliderFill').style.left  = pct1 + '%';
-  document.getElementById('sbSliderFill').style.width = (pct2-pct1) + '%';
-  document.getElementById('sbPriceMinL').textContent = fmtPrice(mn).replace('₹','');
-  document.getElementById('sbPriceMaxL').textContent = mx >= MAX_PRICE ? '50L+' : fmtPrice(mx).replace('₹','');
-  document.getElementById('sbPriceRangeLabel').textContent =
-    mn===0 && mx>=MAX_PRICE ? 'Any Price' : `${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
+  const mn=S.priceMin, mx=S.priceMax;
+  const p1=mn/MAX_PRICE*100, p2=mx/MAX_PRICE*100;
+  const rmin=document.getElementById('sbRangeMin');
+  const rmax=document.getElementById('sbRangeMax');
+  if(rmin) rmin.value=mn;
+  if(rmax) rmax.value=mx;
+  const fill=document.getElementById('sbSliderFill');
+  if(fill){fill.style.left=p1+'%';fill.style.width=(p2-p1)+'%';}
+  const minL=document.getElementById('sbPriceMinL');
+  const maxL=document.getElementById('sbPriceMaxL');
+  const lbl=document.getElementById('sbPriceRangeLabel');
+  if(minL) minL.textContent=fmtPrice(mn).replace('₹','');
+  if(maxL) maxL.textContent=mx>=MAX_PRICE?'50L+':fmtPrice(mx).replace('₹','');
+  if(lbl)  lbl.textContent=(mn===0&&mx>=MAX_PRICE)?'Any Price':`${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
 }
 
-// ══════════════════════════════════════
-//  MOBILE QUICK CHIP
-// ══════════════════════════════════════
-function quickChip(val, btn) {
-  // Quick chips on mobile are simple single-toggle convenience shortcuts
-  const isAll = val === '';
-  if (isAll) {
-    S.fuel=[]; S.trans=[];
-    document.querySelectorAll('.mob-chip').forEach(b=>b.classList.toggle('active', b.dataset.val===''));
-  } else {
-    // Toggle this chip's value
-    let field='', v='';
-    if (val.startsWith('fuel:'))  { field='fuel';  v=val.slice(5); }
-    if (val.startsWith('trans:')) { field='trans'; v=val.slice(6); }
-    toggleArr(S[field], v);
-    btn.classList.toggle('active', S[field].includes(v));
-    // Deactivate "All" chip if any filter active
-    const allBtn = document.querySelector('.mob-chip[data-val=""]');
-    if(allBtn) allBtn.classList.toggle('active', !S.fuel.length&&!S.trans.length);
-  }
-  applyFilters();
-}
-
-// ══════════════════════════════════════
-//  POPUP
-// ══════════════════════════════════════
-
-
-
-
-
-
-
-function setPopFuel(v,btn) {
-  P.fuel=v;
-  document.querySelectorAll('#popFuelPills .popup-pill').forEach(b=>b.classList.toggle('active',b===btn));
-}
-function setPopTrans(v,btn) {
-  P.trans=v;
-  }
-
-
-
-
-
-
-
-
-// ══════════════════════════════════════
-//  SEARCH
-// ══════════════════════════════════════
-function onSearch() {
-  S.search = document.getElementById('searchInput').value.trim().toLowerCase();
-  applyFilters();
-}
-
-// ══════════════════════════════════════
-//  CLEAR ALL
-// ══════════════════════════════════════
+// ── CLEAR ALL ──
 function clearAll() {
-  S = { search:'', fuel:[], trans:[], bodyType:[], colour:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
+  S = {search:'',fuel:[],trans:[],bodyType:[],colour:[],category:[],features:[],safety:[],priceMin:0,priceMax:MAX_PRICE,sort:'default'};
   document.getElementById('searchInput').value='';
-  // Accordion pills
-  document.querySelectorAll('#accFuelBody .acc-pill').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#accTransBody .acc-pill').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.remove('active'));
+  ['accFuelBody','accTransBody','accCategoryBody','accBodyBody','accColourBody','accFeaturesBody','accSafetyBody']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.querySelectorAll('.acc-pill').forEach(b=>b.classList.remove('active')); });
+  document.querySelectorAll('#sbQuickFuel .sb-qpill, #sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('#accSort .acc-pill').forEach((b,i)=>b.classList.toggle('active',i===0));
-  // Quick pills
-  document.querySelectorAll('#sbQuickFuel .sb-qpill').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#sbQuickTrans .sb-qpill').forEach(b=>b.classList.remove('active'));
-  // Badges
-  updateAccBadge('accFuel','accFuelBadge',[]);
-  updateAccBadge('accTrans','accTransBadge',[]);
-  updateAccBadge('accBody','accBodyBadge',[]);
-  updateAccBadge('accColour','accColourBadge',[]);
-  updateAccBadge('accSort','accSortBadge','');
-  updateAccBadge('accPrice','accPriceBadge','');
-  // Mobile
+  ['accFuel','accFuelBadge','accTrans','accTransBadge','accCategory','accCategoryBadge',
+   'accBody','accBodyBadge','accColour','accColourBadge','accFeatures','accFeaturesBadge',
+   'accSafety','accSafetyBadge','accPrice','accPriceBadge','accSort','accSortBadge']
+   .forEach((id,i,a)=>{ if(i%2===1){ setBadge(a[i-1],id,[]); } });
   document.querySelectorAll('.mob-chip').forEach((b,i)=>b.classList.toggle('active',i===0));
-  document.getElementById('mobFilterBtn').classList.remove('has-filter');
+  const fbtn=document.getElementById('mobFilterBtn');
+  if(fbtn) fbtn.classList.remove('has-filter');
   updateSbSlider();
   applyFilters();
+}
+
+// ── SEARCH ──
+function onSearch() {
+  S.search=document.getElementById('searchInput').value.trim().toLowerCase();
+  applyFilters();
+}
+
+// ── QUICK CHIPS (mobile) ──
+function buildMobChips() {
+  const fuels = uniq(allCars.map(c=>c.fuel));
+  const trans = uniq(allCars.map(c=>c.trans));
+  const cont  = document.getElementById('mobChips');
+  cont.innerHTML='';
+  const all=document.createElement('button');
+  all.className='mob-chip active'; all.dataset.val=''; all.textContent='All';
+  all.onclick=()=>quickChip('',all); cont.appendChild(all);
+  fuels.forEach(f=>{ const b=document.createElement('button'); b.className='mob-chip'; b.dataset.val='fuel:'+f; b.textContent=f; b.onclick=()=>quickChip('fuel:'+f,b); cont.appendChild(b); });
+  trans.forEach(t=>{ const b=document.createElement('button'); b.className='mob-chip'; b.dataset.val='trans:'+t; b.textContent=t; b.onclick=()=>quickChip('trans:'+t,b); cont.appendChild(b); });
+}
+function quickChip(val, btn) {
+  document.querySelectorAll('.mob-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.fuel=[]; S.trans=[];
+  if(val.startsWith('fuel:'))  S.fuel  = [val.slice(5)];
+  if(val.startsWith('trans:')) S.trans = [val.slice(6)];
+  applyFilters();
+}
+
+// ══════════════════════════════════════
+//  MOBILE FILTER PANEL
+// ══════════════════════════════════════
+let MP = {};
+
+function buildMfpOptions() {
+  const fuels   = uniq(allCars.map(c=>c.fuel));
+  const trans   = uniq(allCars.map(c=>c.trans));
+  const bodies  = uniq(allCars.map(c=>c.bodyType));
+  const colours = uniq(allCars.map(c=>c.colour));
+  const cats    = uniq(allCars.map(c=>c.category));
+  const feats   = uniqSplit(allCars,'features');
+  const safes   = uniqSplit(allCars,'safety');
+
+  fillMfpPills('mfpFuelPills',     fuels,   'fuel');
+  fillMfpPills('mfpTransPills',    trans,   'trans');
+  fillMfpPills('mfpBodyPills',     bodies,  'bodyType');
+  fillMfpPills('mfpColourPills',   colours, 'colour');
+  fillMfpPills('mfpCategoryPills', cats,    'category');
+  fillMfpPills('mfpFeaturesPills', feats,   'features');
+  fillMfpPills('mfpSafetyPills',   safes,   'safety');
+}
+
+function fillMfpPills(containerId, items, field) {
+  const el=document.getElementById(containerId); if(!el) return;
+  el.innerHTML='';
+  items.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='mfp-pill'; b.textContent=v;
+    b.onclick=()=>toggleMfpPill(b,field,v);
+    el.appendChild(b);
+  });
+}
+
+function toggleMobFilter() {
+  const panel=document.getElementById('mobFilterPanel');
+  const btn=document.getElementById('mobFilterBtn');
+  const open=panel.style.display==='none'||panel.style.display==='';
+  if(open) {
+    MP={fuel:[...S.fuel],trans:[...S.trans],bodyType:[...S.bodyType],colour:[...S.colour],
+        category:[...S.category],features:[...S.features],safety:[...S.safety],
+        priceMin:S.priceMin,priceMax:S.priceMax,sort:S.sort};
+    syncMfpUI();
+    panel.style.display='block';
+    btn.innerHTML='✕ Close'; btn.style.background='#555';
+  } else { closeMobFilter(); }
+}
+function closeMobFilter() {
+  const panel=document.getElementById('mobFilterPanel');
+  const btn=document.getElementById('mobFilterBtn');
+  if(panel) panel.style.display='none';
+  if(btn){
+    btn.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg> Filter &amp; Sort';
+    btn.style.background='';
+    const hasFilter=S.fuel.length||S.trans.length||S.bodyType.length||S.colour.length||S.category.length||S.features.length||S.safety.length||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
+    btn.classList.toggle('has-filter',!!hasFilter);
+  }
+}
+function toggleMfpRow(rowId) {
+  const row=document.getElementById(rowId);
+  const isOpen=row.classList.contains('open');
+  document.querySelectorAll('.mfp-acc-row.open').forEach(r=>r.classList.remove('open'));
+  if(!isOpen) row.classList.add('open');
+}
+function toggleMfpPill(btn,field,val) {
+  if(!MP[field]) MP[field]=[];
+  toggleArr(MP[field],val);
+  btn.classList.toggle('active',MP[field].includes(val));
+  updateMfpVal(field);
+}
+function clearMfp(field,rowId) {
+  MP[field]=[];
+  const containerMap={fuel:'mfpFuelPills',trans:'mfpTransPills',bodyType:'mfpBodyPills',
+    colour:'mfpColourPills',category:'mfpCategoryPills',features:'mfpFeaturesPills',safety:'mfpSafetyPills'};
+  const el=document.getElementById(containerMap[field]);
+  if(el) el.querySelectorAll('.mfp-pill').forEach(b=>b.classList.remove('active'));
+  updateMfpVal(field);
+}
+function updateMfpVal(field) {
+  const valIds={fuel:'mfpValFuel',trans:'mfpValTrans',bodyType:'mfpValBody',colour:'mfpValColour',
+    category:'mfpValCategory',features:'mfpValFeatures',safety:'mfpValSafety'};
+  const el=document.getElementById(valIds[field]); if(!el) return;
+  const arr=MP[field]||[];
+  if(!arr.length){el.textContent='Any';el.classList.add('any');}
+  else{el.textContent=arr.length===1?arr[0]:arr.length+' selected';el.classList.remove('any');}
+}
+function setMSort(v,btn) {
+  MP.sort=v;
+  document.querySelectorAll('#mfpSortPills .mfp-pill').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function onMfpRange() {
+  let mn=parseInt(document.getElementById('mfpRangeMin').value);
+  let mx=parseInt(document.getElementById('mfpRangeMax').value);
+  if(mn>mx){const t=mn;mn=mx;mx=t;}
+  MP.priceMin=mn; MP.priceMax=mx; updateMfpSlider();
+}
+function updateMfpSlider() {
+  const mn=MP.priceMin,mx=MP.priceMax;
+  const p1=mn/MAX_PRICE*100,p2=mx/MAX_PRICE*100;
+  document.getElementById('mfpRangeMin').value=mn;
+  document.getElementById('mfpRangeMax').value=mx;
+  const fill=document.getElementById('mfpSliderFill');
+  if(fill){fill.style.left=p1+'%';fill.style.width=(p2-p1)+'%';}
+  const minE=document.getElementById('mfpPriceMin');
+  const maxE=document.getElementById('mfpPriceMax');
+  const lbl=document.getElementById('mfpPriceLabel');
+  if(minE) minE.textContent=fmtPrice(mn).replace('₹','');
+  if(maxE) maxE.textContent=mx>=MAX_PRICE?'50L+':fmtPrice(mx).replace('₹','');
+  if(lbl)  lbl.textContent=(mn===0&&mx>=MAX_PRICE)?'Any Price':`${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
+}
+function syncMfpUI() {
+  document.querySelectorAll('#mfpSortPills .mfp-pill').forEach(b=>b.classList.toggle('active',b.dataset.sort===MP.sort));
+  const pill2field={mfpFuelPills:'fuel',mfpTransPills:'trans',mfpBodyPills:'bodyType',
+    mfpColourPills:'colour',mfpCategoryPills:'category',mfpFeaturesPills:'features',mfpSafetyPills:'safety'};
+  Object.entries(pill2field).forEach(([pid,field])=>{
+    document.querySelectorAll('#'+pid+' .mfp-pill').forEach(b=>
+      b.classList.toggle('active',(MP[field]||[]).includes(b.textContent.trim())));
+  });
+  ['fuel','trans','bodyType','colour','category','features','safety'].forEach(f=>updateMfpVal(f));
+  document.querySelectorAll('.mfp-acc-row.open').forEach(r=>r.classList.remove('open'));
+  document.getElementById('mfpRangeMin').value=MP.priceMin;
+  document.getElementById('mfpRangeMax').value=MP.priceMax;
+  updateMfpSlider();
+}
+function applyMfp() {
+  S.fuel=[...(MP.fuel||[])]; S.trans=[...(MP.trans||[])];
+  S.bodyType=[...(MP.bodyType||[])]; S.colour=[...(MP.colour||[])];
+  S.category=[...(MP.category||[])]; S.features=[...(MP.features||[])];
+  S.safety=[...(MP.safety||[])];
+  S.priceMin=MP.priceMin; S.priceMax=MP.priceMax; S.sort=MP.sort;
+  updateSbSlider();
+  closeMobFilter();
+  applyFilters();
+}
+function resetMfp() {
+  MP={fuel:[],trans:[],bodyType:[],colour:[],category:[],features:[],safety:[],priceMin:0,priceMax:MAX_PRICE,sort:'default'};
+  syncMfpUI();
 }
 
 // ══════════════════════════════════════
@@ -1264,17 +1346,15 @@ function applyFilters() {
     if(S.bodyType.length && !S.bodyType.includes(c.bodyType)) return false;
     if(S.colour.length   && !S.colour.includes(c.colour))     return false;
     if(S.category.length && !S.category.includes(c.category)) return false;
-    // Features: car must have ALL selected features
     if(S.features.length) {
-      const cf = (c.features||'').split(/[,;|]/).map(v=>v.trim());
+      const cf=(c.features||'').split(/[,;|]/).map(v=>v.trim());
       if(!S.features.every(f=>cf.includes(f))) return false;
     }
-    // Safety: car must have ALL selected safety features
     if(S.safety.length) {
-      const cs = (c.safety||'').split(/[,;|]/).map(v=>v.trim());
+      const cs=(c.safety||'').split(/[,;|]/).map(v=>v.trim());
       if(!S.safety.every(s=>cs.includes(s))) return false;
     }
-    if(S.priceMin>0 && c.price<S.priceMin)  return false;
+    if(S.priceMin>0 && c.price<S.priceMin) return false;
     if(S.priceMax<MAX_PRICE && c.price>S.priceMax) return false;
     return true;
   });
@@ -1285,42 +1365,40 @@ function applyFilters() {
 }
 
 function renderGrid(cars) {
-  const avail = allCars.filter(c=>c.status.toLowerCase()!=='sold').length;
-  document.getElementById('availCount').textContent = avail;
-  document.getElementById('sbResults').innerHTML =
-    `Showing <strong>${cars.length}</strong> of ${allCars.length}`;
+  const avail=allCars.filter(c=>c.status.toLowerCase()!=='sold').length;
+  const countEl=document.getElementById('availCount');
+  if(countEl) countEl.textContent=avail;
+  const resEl=document.getElementById('sbResults');
+  if(resEl) resEl.innerHTML=`Showing <strong>${cars.length}</strong> of ${allCars.length}`;
 
-  if (!cars.length) {
-    document.getElementById('grid').innerHTML =
-      `<div class="state"><p>🔍 No vehicles found.<br>Try adjusting your filters.</p></div>`;
+  if(!cars.length){
+    document.getElementById('grid').innerHTML=`<div class="state"><p>🔍 No vehicles found.<br>Try adjusting your filters.</p></div>`;
     notifyHeight(); return;
   }
-
-  document.getElementById('grid').innerHTML = cars.map((c,i)=>{
-    const sold    = c.status.toLowerCase()==='sold';
-    const title   = [c.model,c.variant].filter(Boolean).join(' ');
-    const mainImg = c.photos[0]||'';
-    const km      = c.odometer ? c.odometer.toLocaleString('en-IN')+' km' : '';
-    const pStr    = c.price>0 ? '₹'+c.price.toLocaleString('en-IN') : '';
-    const n       = c.photos.length;
-    const waMsg   = encodeURIComponent(`Hi, I'm interested in the ${title}${pStr?' ('+pStr+')':''}. Is it available?`);
-    const waHref  = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
-    return `
-    <div class="card" style="animation-delay:${Math.min(i,16)*.04}s" onclick="openDetail(${c.id})">
+  document.getElementById('grid').innerHTML=cars.map((c,i)=>{
+    const sold=c.status.toLowerCase()==='sold';
+    const title=[c.model,c.variant].filter(Boolean).join(' ');
+    const mainImg=c.photos[0]||'';
+    const km=c.odometer?c.odometer.toLocaleString('en-IN')+' km':'';
+    const pStr=c.price>0?'₹'+c.price.toLocaleString('en-IN'):'';
+    const n=c.photos.length;
+    const waMsg=encodeURIComponent(`Hi, I'm interested in the ${title}${pStr?' ('+pStr+')':''}. Is it available?`);
+    const waHref=`https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+    return `<div class="card" style="animation-delay:${Math.min(i,16)*.04}s" onclick="openDetail(${c.id})">
       <div class="img-wrap">
-        ${mainImg?`<img src="${x(mainImg)}" alt="${x(title)}" loading="lazy" onerror="this.src='';this.style.display='none'">`:`<div class="no-photo">No photo</div>`}
+        ${mainImg?`<img src="${esc(mainImg)}" alt="${esc(title)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="no-photo">No photo</div>`}
         ${sold?'<div class="badge-sold">Sold</div>':''}
         ${n>1?`<div class="badge-n"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>${n}</div>`:''}
       </div>
       <div class="card-body">
-        ${c.make?`<div class="car-make">${x(c.make)}</div>`:''}
-        <div class="car-title">${x(title)||'Unnamed Vehicle'}</div>
+        ${c.make?`<div class="car-make">${esc(c.make)}</div>`:''}
+        <div class="car-title">${esc(title)||'Unnamed Vehicle'}</div>
         <div class="specs">
-          ${c.fuel    ?`<span class="spec">⛽ ${x(c.fuel)}</span>`:''}
-          ${c.trans   ?`<span class="spec">⚙️ ${x(c.trans)}</span>`:''}
+          ${c.fuel    ?`<span class="spec">⛽ ${esc(c.fuel)}</span>`:''}
+          ${c.trans   ?`<span class="spec">⚙️ ${esc(c.trans)}</span>`:''}
           ${km        ?`<span class="spec">🕐 ${km}</span>`:''}
-          ${c.bodyType?`<span class="spec">🚘 ${x(c.bodyType)}</span>`:''}
-          ${c.colour  ?`<span class="spec">🎨 ${x(c.colour)}</span>`:''}
+          ${c.bodyType?`<span class="spec">🚘 ${esc(c.bodyType)}</span>`:''}
+          ${c.colour  ?`<span class="spec">🎨 ${esc(c.colour)}</span>`:''}
         </div>
         <div class="card-foot">
           ${pStr?`<div class="price">${pStr}</div>`:`<div class="por">Price on request</div>`}
@@ -1334,18 +1412,17 @@ function renderGrid(cars) {
   }).join('');
   setTimeout(notifyHeight,300);
 }
-function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════
 //  DETAIL PAGE
 // ══════════════════════════════════════
 function openDetail(id) {
   const car=allCars.find(c=>c.id===id); if(!car) return;
-  const title  =[car.model,car.variant].filter(Boolean).join(' ');
-  const pStr   =car.price>0?'₹'+car.price.toLocaleString('en-IN'):'Price on Request';
-  const km     =car.odometer?car.odometer.toLocaleString('en-IN')+' km':'—';
-  const sold   =car.status.toLowerCase()==='sold';
-  const waMsg  =encodeURIComponent(`Hi, I'm interested in the ${title} (${pStr}). Is it still available?`);
+  const title=[car.model,car.variant].filter(Boolean).join(' ');
+  const pStr=car.price>0?'₹'+car.price.toLocaleString('en-IN'):'Price on Request';
+  const km=car.odometer?car.odometer.toLocaleString('en-IN')+' km':'—';
+  const sold=car.status.toLowerCase()==='sold';
+  const waMsg=encodeURIComponent(`Hi, I'm interested in the ${title} (${pStr}). Is it still available?`);
 
   dpImages=car.photos; dpIdx=0;
   document.getElementById('dpBarTitle').textContent=title;
@@ -1353,30 +1430,8 @@ function openDetail(id) {
   document.getElementById('dpSoldTag').style.display=sold?'':'none';
   document.getElementById('dpTitle').textContent=title;
   document.getElementById('dpMake').textContent=car.make||'';
-  // Features block
-  const featEl = document.getElementById('dpFeatures');
-  if (car.features && featEl) {
-    const feats = car.features.split(/[,;|]/).map(f=>f.trim()).filter(Boolean);
-    if (feats.length) {
-      featEl.innerHTML = `<div style="margin-bottom:14px;">
-        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;">Features</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">${feats.map(f=>`<span style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--ink2);">${x(f)}</span>`).join('')}</div>
-      </div>`;
-    } else featEl.innerHTML='';
-  } else if(featEl) featEl.innerHTML='';
 
-  // Safety features block
-  const safeEl = document.getElementById('dpSafety');
-  if (car.safety && safeEl) {
-    const safes = car.safety.split(/[,;|]/).map(s=>s.trim()).filter(Boolean);
-    if (safes.length) {
-      safeEl.innerHTML = `<div style="margin-bottom:14px;">
-        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;">Safety Features</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">${safes.map(s=>`<span style="background:#F0FFF4;border:1px solid #C6F6D5;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:#276749;">🛡 ${x(s)}</span>`).join('')}</div>
-      </div>`;
-    } else safeEl.innerHTML='';
-  } else if(safeEl) safeEl.innerHTML='';
-
+  // Specs grid
   document.getElementById('dpSpecs').innerHTML=[
     {label:'Category',     value:car.category||''},
     {label:'Fuel Type',    value:car.fuel||''},
@@ -1384,16 +1439,44 @@ function openDetail(id) {
     {label:'Odometer',     value:km},
     {label:'Body Type',    value:car.bodyType||''},
     {label:'Colour',       value:car.colour||''},
-    {label:'Seats',        value:car.seats ? car.seats+' Seats' : ''},
-    {label:'Owners',       value:car.owners ? car.owners+' Owner(s)' : ''},
-    {label:'Airbags',      value:car.airbags ? car.airbags+' Airbags' : ''},
-  ].filter(s=>s.value).map(s=>`<div class="dp-spec-item"><div class="dp-spec-label">${s.label}</div><div class="dp-spec-value">${s.value}</div></div>`).join('');
+    {label:'Seats',        value:car.seats?car.seats+' Seats':''},
+    {label:'Owners',       value:car.owners?car.owners+' Owner(s)':''},
+    {label:'Airbags',      value:car.airbags?car.airbags+' Airbags':''},
+  ].filter(s=>s.value).map(s=>`
+    <div class="dp-spec-item">
+      <div class="dp-spec-label">${s.label}</div>
+      <div class="dp-spec-value">${esc(s.value)}</div>
+    </div>`).join('');
+
+  // Features
+  const featEl=document.getElementById('dpFeatures');
+  if(featEl) {
+    const feats=(car.features||'').split(/[,;|]/).map(f=>f.trim()).filter(Boolean);
+    featEl.innerHTML=feats.length?`<div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">Features</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${feats.map(f=>`<span style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--ink2)">${esc(f)}</span>`).join('')}</div>
+    </div>`:'';
+  }
+
+  // Safety
+  const safeEl=document.getElementById('dpSafety');
+  if(safeEl) {
+    const safes=(car.safety||'').split(/[,;|]/).map(s=>s.trim()).filter(Boolean);
+    safeEl.innerHTML=safes.length?`<div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">Safety Features</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${safes.map(s=>`<span style="background:#F0FFF4;border:1px solid #C6F6D5;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:#276749">🛡 ${esc(s)}</span>`).join('')}</div>
+    </div>`:'';
+  }
+
   document.getElementById('dpWa').href=`https://wa.me/${WA_NUMBER}?text=${waMsg}`;
   document.getElementById('dpCall').onclick=()=>{window.location.href=`tel:${DEALER_PHONE}`;};
 
   if(dpImages.length){updateDPCarousel();buildDPThumbs();}
-  else{document.getElementById('dpImg').src='';document.getElementById('dpThumbs').innerHTML='';document.getElementById('dpCounter').textContent='';}
-
+  else{
+    document.getElementById('dpImg').src='';
+    document.getElementById('dpThumbs').innerHTML='';
+    document.getElementById('dpCounter').textContent='';
+  }
   document.getElementById('detailPage').classList.add('open');
   document.getElementById('detailPage').scrollTop=0;
   notifyHeight();
@@ -1411,237 +1494,36 @@ function updateDPCarousel(){
   document.getElementById('dpNext').disabled=dpIdx===dpImages.length-1;
   document.querySelectorAll('.dp-thumb').forEach((t,i)=>t.classList.toggle('active',i===dpIdx));
   const a=document.getElementById('dpThumbs').querySelectorAll('.dp-thumb')[dpIdx];
-  if(a)a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  if(a) a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
 }
 function buildDPThumbs(){
   document.getElementById('dpThumbs').innerHTML=dpImages.map((u,i)=>
-    `<img class="dp-thumb${i===0?' active':''}" src="${x(u)}" loading="lazy" onclick="jumpDP(${i})" onerror="this.style.display='none'" alt="Photo ${i+1}">`
+    `<img class="dp-thumb${i===0?' active':''}" src="${esc(u)}" loading="lazy" onclick="jumpDP(${i})" onerror="this.style.display='none'" alt="Photo ${i+1}">`
   ).join('');
 }
 function navDP(d){dpIdx=Math.max(0,Math.min(dpImages.length-1,dpIdx+d));updateDPCarousel();}
 function jumpDP(i){dpIdx=i;updateDPCarousel();}
 
-let tX=0;
-document.getElementById('dpCarousel').addEventListener('touchstart',e=>{tX=e.touches[0].clientX;},{passive:true});
-document.getElementById('dpCarousel').addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-tX; if(Math.abs(dx)>40)navDP(dx<0?1:-1);
-});
-document.addEventListener('keydown',e=>{
-  if(!document.getElementById('detailPage').classList.contains('open'))return;
-  if(e.key==='ArrowLeft')navDP(-1);if(e.key==='ArrowRight')navDP(1);if(e.key==='Escape')closeDetail();
-});
-
-
-// ══════════════════════════════════════
-//  MOBILE FILTER PANEL
-// ══════════════════════════════════════
-
-// Temp state for panel (committed on "Show Results")
-let MP = {};
-
-function buildMfpOptions() {
-  const fuels    = [...new Set(allCars.map(c=>c.fuel).filter(Boolean))].sort();
-  const trans    = [...new Set(allCars.map(c=>c.trans).filter(Boolean))].sort();
-  const bodies   = [...new Set(allCars.map(c=>c.bodyType).filter(Boolean))].sort();
-  const colours  = [...new Set(allCars.map(c=>c.colour).filter(Boolean))].sort();
-  const cats     = [...new Set(allCars.map(c=>c.category).filter(Boolean))].sort();
-  const featSet  = new Set(); allCars.forEach(c=>{if(c.features)c.features.split(/[,;|]/).map(v=>v.trim()).filter(Boolean).forEach(v=>featSet.add(v));});
-  const safeSet  = new Set(); allCars.forEach(c=>{if(c.safety)c.safety.split(/[,;|]/).map(v=>v.trim()).filter(Boolean).forEach(v=>safeSet.add(v));});
-  const feats    = [...featSet].sort();
-  const safes    = [...safeSet].sort();
-
-  function makePills(containerId, items, mfpField) {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = '';
-    items.forEach(v => {
-      const b = document.createElement('button');
-      b.className = 'mfp-pill';
-      b.textContent = v;
-      b.onclick = () => toggleMfpPill(b, mfpField, v);
-      el.appendChild(b);
-    });
-  }
-  makePills('mfpFuelPills',     fuels,   'fuel');
-  makePills('mfpTransPills',    trans,   'trans');
-  makePills('mfpBodyPills',     bodies,  'bodyType');
-  makePills('mfpColourPills',   colours, 'colour');
-  makePills('mfpCategoryPills', cats,    'category');
-  makePills('mfpFeaturesPills', feats,   'features');
-  makePills('mfpSafetyPills',   safes,   'safety');
-}
-
-function toggleMobFilter() {
-  const panel = document.getElementById('mobFilterPanel');
-  const btn   = document.getElementById('mobFilterBtn');
-  const open  = panel.style.display === 'none' || panel.style.display === '';
-  if (open) {
-    // Copy current S into MP
-    MP = {
-      fuel:     [...S.fuel],
-      trans:    [...S.trans],
-      bodyType: [...S.bodyType],
-      colour:   [...S.colour],
-      priceMin: S.priceMin,
-      priceMax: S.priceMax,
-      sort:     S.sort
-    };
-    syncMfpUI();
-    panel.style.display = 'block';
-    btn.textContent = '✕ Close';
-    btn.style.background = '#555';
-  } else {
-    closeMobFilter();
-  }
-}
-
-function closeMobFilter() {
-  const panel = document.getElementById('mobFilterPanel');
-  const btn   = document.getElementById('mobFilterBtn');
-  panel.style.display = 'none';
-  // Restore button label
-  const hasFilter = S.fuel.length||S.trans.length||S.bodyType.length||S.colour.length||S.priceMin>0||S.priceMax<MAX_PRICE||S.sort!=='default';
-  btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg> Filter &amp; Sort';
-  btn.style.background = '';
-  btn.classList.toggle('has-filter', !!hasFilter);
-}
-
-function toggleMfpRow(rowId) {
-  const row = document.getElementById(rowId);
-  const isOpen = row.classList.contains('open');
-  // Close all rows
-  document.querySelectorAll('.mfp-acc-row.open').forEach(r => r.classList.remove('open'));
-  if (!isOpen) row.classList.add('open');
-}
-
-function toggleMfpPill(btn, field, val) {
-  toggleArr(MP[field], val);
-  btn.classList.toggle('active', MP[field].includes(val));
-  updateMfpVal(field);
-}
-
-function clearMfp(field, rowId) {
-  MP[field] = [];
-  // Deactivate all pills
-  const containerMap = {fuel:'mfpFuelPills', trans:'mfpTransPills', bodyType:'mfpBodyPills', colour:'mfpColourPills', category:'mfpCategoryPills', features:'mfpFeaturesPills', safety:'mfpSafetyPills'};
-  const el = document.getElementById(containerMap[field]);
-  if (el) el.querySelectorAll('.mfp-pill').forEach(b => b.classList.remove('active'));
-  updateMfpVal(field);
-}
-
-function updateMfpVal(field) {
-  const valIds = {fuel:'mfpValFuel', trans:'mfpValTrans', bodyType:'mfpValBody', colour:'mfpValColour', category:'mfpValCategory', features:'mfpValFeatures', safety:'mfpValSafety'};
-  const el = document.getElementById(valIds[field]);
-  if (!el) return;
-  const arr = MP[field] || [];
-  if (!arr.length) {
-    el.textContent = 'Any';
-    el.classList.add('any');
-  } else {
-    el.textContent = arr.length === 1 ? arr[0] : arr.length + ' selected';
-    el.classList.remove('any');
-  }
-}
-
-function setMSort(v, btn) {
-  MP.sort = v;
-  document.querySelectorAll('#mfpSortPills .mfp-pill').forEach(b => b.classList.toggle('active', b === btn));
-}
-
-function onMfpRange() {
-  let mn = parseInt(document.getElementById('mfpRangeMin').value);
-  let mx = parseInt(document.getElementById('mfpRangeMax').value);
-  if (mn > mx) { const t=mn; mn=mx; mx=t; }
-  MP.priceMin = mn; MP.priceMax = mx;
-  updateMfpSlider();
-}
-
-function updateMfpSlider() {
-  const mn = MP.priceMin, mx = MP.priceMax;
-  const p1 = mn/MAX_PRICE*100, p2 = mx/MAX_PRICE*100;
-  document.getElementById('mfpRangeMin').value = mn;
-  document.getElementById('mfpRangeMax').value = mx;
-  document.getElementById('mfpSliderFill').style.left  = p1+'%';
-  document.getElementById('mfpSliderFill').style.width = (p2-p1)+'%';
-  document.getElementById('mfpPriceMin').textContent = fmtPrice(mn).replace('₹','');
-  document.getElementById('mfpPriceMax').textContent = mx>=MAX_PRICE?'50L+':fmtPrice(mx).replace('₹','');
-  document.getElementById('mfpPriceLabel').textContent =
-    mn===0&&mx>=MAX_PRICE ? 'Any Price' : `${fmtPrice(mn)} – ${mx>=MAX_PRICE?'50L+':fmtPrice(mx)}`;
-}
-
-function syncMfpUI() {
-  // Sort pills
-  document.querySelectorAll('#mfpSortPills .mfp-pill').forEach(b => {
-    b.classList.toggle('active', b.dataset.sort === MP.sort);
-  });
-  // Filter pills
-  document.querySelectorAll('#mfpFuelPills .mfp-pill').forEach(b =>
-    b.classList.toggle('active', (MP.fuel||[]).includes(b.dataset.fuel)));
-  document.querySelectorAll('#mfpTransPills .mfp-pill').forEach(b =>
-    b.classList.toggle('active', (MP.trans||[]).includes(b.dataset.trans)));
-  document.querySelectorAll('#mfpBodyPills .mfp-pill').forEach(b =>
-    b.classList.toggle('active', (MP.bodyType||[]).includes(b.dataset.body)));
-  document.querySelectorAll('#mfpColourPills .mfp-pill').forEach(b =>
-    b.classList.toggle('active', (MP.colour||[]).includes(b.dataset.colour)));
-  // Val labels
-  ['fuel','trans','bodyType','colour','category','features','safety'].forEach(f => updateMfpVal(f));
-  // Close all rows
-  document.querySelectorAll('.mfp-acc-row.open').forEach(r => r.classList.remove('open'));
-  // Price slider
-  document.getElementById('mfpRangeMin').value = MP.priceMin;
-  document.getElementById('mfpRangeMax').value = MP.priceMax;
-  updateMfpSlider();
-}
-
-function applyMfp() {
-  S.fuel     = [...(MP.fuel||[])];
-  S.trans    = [...(MP.trans||[])];
-  S.bodyType = [...(MP.bodyType||[])];
-  S.colour   = [...(MP.colour||[])];
-  S.category = [...(MP.category||[])];
-  S.features = [...(MP.features||[])];
-  S.safety   = [...(MP.safety||[])];
-  S.priceMin = MP.priceMin;
-  S.priceMax = MP.priceMax;
-  S.sort     = MP.sort;
-  // Sync sidebar
-  updateSbSlider();
-  syncAccFuel(); syncAccTrans();
-  if(document.getElementById('accBodyBody'))
-    document.querySelectorAll('#accBodyBody .acc-pill').forEach(b=>b.classList.toggle('active', S.bodyType.includes(b.dataset.body)));
-  updateAccBadge('accBody','accBodyBadge', S.bodyType);
-  if(document.getElementById('accColourBody'))
-    document.querySelectorAll('#accColourBody .acc-pill').forEach(b=>b.classList.toggle('active', S.colour.includes(b.dataset.colour)));
-  updateAccBadge('accColour','accColourBadge', S.colour);
-  document.querySelectorAll('#accSort .acc-pill').forEach((b,i)=>{
-    const sorts={0:'default',1:'price-asc',2:'price-desc',3:'km-asc'};
-    b.classList.toggle('active', sorts[i]===S.sort);
-  });
-  const sortLabels={default:'','price-asc':'Price ↑','price-desc':'Price ↓','km-asc':'Low KM'};
-  updateAccBadge('accSort','accSortBadge', sortLabels[S.sort]||'');
-  const priceActive = S.priceMin>0||S.priceMax<MAX_PRICE;
-  updateAccBadge('accPrice','accPriceBadge', priceActive?fmtPrice(S.priceMin)+'–'+fmtPrice(S.priceMax):'');
-  closeMobFilter();
-  applyFilters();
-}
-
-function resetMfp() {
-  MP = { fuel:[], trans:[], bodyType:[], colour:[], category:[], features:[], safety:[], priceMin:0, priceMax:MAX_PRICE, sort:'default' };
-  document.getElementById('mfpRangeMin').value = 0;
-  document.getElementById('mfpRangeMax').value = MAX_PRICE;
-  syncMfpUI();
-}
+// Swipe support on detail carousel
+(function(){
+  let sx=0;
+  document.addEventListener('touchstart',e=>{
+    if(document.getElementById('detailPage').classList.contains('open')) sx=e.touches[0].clientX;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!document.getElementById('detailPage').classList.contains('open')) return;
+    const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40){ navDP(dx<0?1:-1); }
+  },{passive:true});
+})();
 
 // ── IFRAME RESIZE ──
-function notifyHeight(){
-  const h=Math.max(document.body.scrollHeight,700);
-  try{
-    window.parent.postMessage({type:'setHeight',height:h},'*');
-    window.parent.postMessage(JSON.stringify({sentinel:'amp',type:'embed-size',height:h}),'*');
-  }catch(e){}
+function notifyHeight() {
+  try { window.parent.postMessage({type:'caarseva-resize',height:document.body.scrollHeight},'*'); } catch(e){}
 }
-window.addEventListener('load',notifyHeight);
-window.addEventListener('resize',notifyHeight);
+window.addEventListener('load', ()=>{ setTimeout(notifyHeight,400); });
+new ResizeObserver(()=>notifyHeight()).observe(document.body);
+
 </script>
 
 <!-- ═══════════ FOOTER ═══════════ -->
