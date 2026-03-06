@@ -762,7 +762,7 @@ footer::before {
         <ul class="footer-links">
           <li><a href="https://maps.google.com" target="_blank">📍 Yelahanka New Town, Bengaluru</a></li>
           <li><a href="tel:+919999999999">📞 +91 99999 99999</a></li>
-          <li><a href="mailto:caarsseva@gmail.com">✉️ caarsseva@gmail.com</a></li>
+          <li><a href="/cdn-cgi/l/email-protection#e4878585969797819285a48389858d88ca878b89">✉️ <span class="__cf_email__" data-cfemail="25464444575656405344654248444c490b464a48">[email&#160;protected]</span></a></li>
           <li><a href="https://maps.google.com" target="_blank">🗺️ Get Directions</a></li>
         </ul>
         <div style="margin-top:18px;">
@@ -790,7 +790,7 @@ footer::before {
   </svg>
 </a>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ── CONFIG ──
 const API_URL = "https://script.google.com/macros/s/AKfycbythY8Z7vu_vEpK-jIL9R_6V4psk5RsfPyIAUkGxMQi6WMI4N_mox4EGXJTsFwWdq1A/exec";
 const WA_NUMBER = "919999999999";
@@ -805,7 +805,7 @@ const TOTAL_STEPS = 3;
 window.addEventListener('load', loadDropdowns);
 
 function loadDropdowns() {
-  fetch(API_URL)
+  fetch(API_URL + '?action=getDropdowns')
     .then(r => r.json())
     .then(res => {
       if (!res.success) throw new Error(res.error || 'Failed to load data');
@@ -1103,18 +1103,24 @@ function submitForm() {
     notes:        document.getElementById('f_notes').value.trim(),
   };
 
-  fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'application/json' }
+  // Build GET URL with all params (Apps Script handles GET much more reliably than POST from browsers)
+  const params = new URLSearchParams({ action: 'submit', ...payload });
+  const submitUrl = API_URL + '?' + params.toString();
+
+  fetch(submitUrl)
+  .then(r => {
+    if (!r.ok) throw new Error('Network error: ' + r.status);
+    return r.text();
   })
-  .then(r => r.json())
-  .then(res => {
+  .then(text => {
+    let res;
+    try { res = JSON.parse(text); }
+    catch(e) { throw new Error('Invalid response from server'); }
     if (!res.success) throw new Error(res.error || 'Submission failed');
     showSuccess(res.uid);
   })
   .catch(err => {
-    alert('Submission failed: ' + err.message + '\n\nPlease try calling us directly.');
+    alert('Submission failed: ' + err.message + '\n\nPlease try calling us on +91 99999 99999 or WhatsApp us directly.');
     btn.disabled = false;
     document.getElementById('submitSpinner').style.display = 'none';
     document.getElementById('submitBtnText').textContent = 'Submit Enquiry';
@@ -1170,11 +1176,4 @@ function scrollToForm() {
 
 // Notify parent iframe of height
 function notifyHeight() {
-  try { window.parent.postMessage({type:'caarseva-resize', height:document.body.scrollHeight},'*'); } catch(e){} 
-}
-window.addEventListener('load', ()=>setTimeout(notifyHeight,600));
-new ResizeObserver(()=>notifyHeight()).observe(document.body);
-</script>
-
-</body>
-</html>
+  try { window.parent.postMess
